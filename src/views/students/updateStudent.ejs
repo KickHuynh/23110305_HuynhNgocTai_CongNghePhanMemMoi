@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Cập nhật sinh viên</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Cập nhật sinh viên</h1>
+
+    <form action="/put-crud" method="POST" class="form">
+      <input type="hidden" name="id" value="<%= data.id %>">
+
+      <label>Mã sinh viên</label>
+      <input type="text" name="studentCode" value="<%= data.studentCode %>" required>
+
+      <label>Họ tên</label>
+      <input type="text" name="fullName" value="<%= data.fullName %>" required>
+
+      <label>Email</label>
+      <input type="email" name="email" value="<%= data.email %>" required>
+
+      <label>Số điện thoại</label>
+      <input type="text" name="phoneNumber" value="<%= data.phoneNumber %>">
+
+      <label>Lớp</label>
+      <input type="text" name="className" value="<%= data.className %>">
+
+      <label>Chuyên ngành</label>
+      <input type="text" name="major" value="<%= data.major %>">
+
+      <button type="submit" class="btn">Cập nhật</button>
+      <a href="/get-crud" class="btn btn-secondary">Quay lại</a>
+    </form>
+  </div>
+</body>
+</html>
