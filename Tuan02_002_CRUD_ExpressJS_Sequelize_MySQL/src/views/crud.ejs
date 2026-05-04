@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Thêm sinh viên</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Thêm sinh viên</h1>
+
+    <form action="/post-crud" method="POST" class="form">
+      <label>Mã sinh viên</label>
+      <input type="text" name="studentCode" required>
+
+      <label>Họ tên</label>
+      <input type="text" name="fullName" required>
+
+      <label>Email</label>
+      <input type="email" name="email" required>
+
+      <label>Số điện thoại</label>
+      <input type="text" name="phoneNumber">
+
+      <label>Lớp</label>
+      <input type="text" name="className">
+
+      <label>Chuyên ngành</label>
+      <input type="text" name="major">
+
+      <button type="submit" class="btn">Lưu sinh viên</button>
+      <a href="/get-crud" class="btn btn-secondary">Xem danh sách</a>
+    </form>
+  </div>
+</body>
+</html>
