@@ -150,7 +150,7 @@ const getCategories = async () => {
     firstCategory.localeCompare(secondCategory)
   );
 };
-
+//top best seller
 const getTopBestSellers = async (limit = 10) => {
   const parsedLimit = parsePositiveInt(limit, 10);
 
