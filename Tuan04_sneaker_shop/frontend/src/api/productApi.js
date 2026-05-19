@@ -24,6 +24,18 @@ const productApi = {
   getRelatedProducts(id) {
     return axiosClient.get(`/products/${id}/related`);
   },
+
+  getCategories() {
+    return axiosClient.get('/products/categories');
+  },
+
+  getTopBestSellers(limit = 10) {
+    return axiosClient.get('/products/top/best-sellers', { params: { limit } });
+  },
+
+  getTopMostViewed(limit = 10) {
+    return axiosClient.get('/products/top/most-viewed', { params: { limit } });
+  },
 };
 
 export default productApi;

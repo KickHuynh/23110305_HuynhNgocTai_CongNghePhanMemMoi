@@ -28,6 +28,7 @@ function ShopNavbar() {
   const navLinks = [
     { label: 'Home', to: '/home' },
     { label: 'Products', to: '/products' },
+    { label: 'Categories', to: '/categories' },
     { label: 'Profile', to: '/profile' },
   ];
 

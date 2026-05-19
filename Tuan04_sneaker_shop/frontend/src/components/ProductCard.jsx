@@ -30,6 +30,7 @@ function ProductCard({ product }) {
   const badges = getBadges(product);
   const outOfStock = Number(product?.stock) <= 0;
   const displayPrice = hasSalePrice(product) ? product.salePrice : product.price;
+  const formattedViews = Number(product?.views || 0).toLocaleString('vi-VN');
 
   const handleNavigate = () => {
     navigate(`/products/${product._id}`);
@@ -91,13 +92,15 @@ function ProductCard({ product }) {
         <div className="mb-5 space-y-2">
           <div className="flex items-center justify-between gap-3 text-sm text-slate-500">
             <span>{product?.category || 'Lifestyle'}</span>
-            <span>{product?.sold || 0} sold</span>
+            <span>🔥 {product?.sold || 0} sold</span>
           </div>
           <div className="flex items-center justify-between gap-3 text-sm">
             <span className={`font-semibold ${outOfStock ? 'text-red-500' : 'text-emerald-600'}`}>
               {outOfStock ? 'Out of stock' : `In stock: ${product?.stock || 0}`}
             </span>
-            <span className="text-slate-500">Sizes: {product?.sizes?.length || 0}</span>
+            <span className="text-slate-500">
+              {product?.views !== undefined && product?.views !== null ? `👁 ${formattedViews} views` : `Sizes: ${product?.sizes?.length || 0}`}
+            </span>
           </div>
         </div>
 

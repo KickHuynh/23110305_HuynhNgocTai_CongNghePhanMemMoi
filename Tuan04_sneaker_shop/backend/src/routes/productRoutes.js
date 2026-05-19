@@ -3,6 +3,9 @@ const router = express.Router();
 const productController = require('../controllers/productController');
 
 // Define routes - specific routes must come before parameterized routes
+router.get('/categories', productController.getCategories);
+router.get('/top/best-sellers', productController.getTopBestSellers);
+router.get('/top/most-viewed', productController.getTopMostViewed);
 router.get('/new', productController.getNewProducts);
 router.get('/best-seller', productController.getBestSellerProducts);
 router.get('/promotions', productController.getPromotionProducts);

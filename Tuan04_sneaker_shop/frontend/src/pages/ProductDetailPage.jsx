@@ -105,6 +105,7 @@ function ProductDetailPage() {
   const outOfStock = Number(product.stock) <= 0;
   const displayPrice = hasSalePrice(product) ? product.salePrice : product.price;
   const saleAmount = hasSalePrice(product) ? Number(product.price) - Number(product.salePrice) : 0;
+  const formattedViews = Number(product.views || 0).toLocaleString('vi-VN');
 
   const handleAddToCart = () => {
     if (product.sizes?.length && !selectedSize) {
@@ -170,6 +171,7 @@ function ProductDetailPage() {
               <span className="font-semibold text-slate-700">{product.rating || 5}/5</span>
               <span className="text-slate-400">{product.numReviews || 0} reviews</span>
               <span className="text-slate-400">{product.sold || 0} sold</span>
+              <span className="text-slate-400">Views: {formattedViews}</span>
             </div>
 
             <div className="mt-6 rounded-[28px] border border-orange-100 bg-orange-50/60 p-5">
@@ -317,6 +319,10 @@ function ProductDetailPage() {
               <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3">
                 <span className="font-semibold text-slate-500">Sold</span>
                 <span className="font-bold text-slate-950">{product.sold || 0}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3">
+                <span className="font-semibold text-slate-500">Views</span>
+                <span className="font-bold text-slate-950">{formattedViews}</span>
               </div>
               <div className="flex items-center justify-between gap-4">
                 <span className="font-semibold text-slate-500">Product ID</span>

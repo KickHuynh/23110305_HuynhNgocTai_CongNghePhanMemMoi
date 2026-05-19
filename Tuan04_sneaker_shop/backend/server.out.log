@@ -1,0 +1,7 @@
+
+> week03-fullstack-backend@1.0.0 start
+> node ./src/server.js
+
+◇ injected env (5) from .env // tip: ⌘ suppress logs { quiet: true }
+Server is running at http://localhost:5000
+MongoDB connected successfully

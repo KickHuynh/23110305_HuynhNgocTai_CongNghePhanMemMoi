@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CloseOutlined, FilterOutlined, InboxOutlined, WarningOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, ArrowRightOutlined, CloseOutlined, FilterOutlined, InboxOutlined, WarningOutlined } from '@ant-design/icons';
 import productApi from '../api/productApi';
 import ProductFilter from '../components/ProductFilter';
 import ProductCard from '../components/ProductCard';
-import { cleanFilterParams, extractApiData } from '../utils/shop';
+import { cleanFilterParams, extractApiData, extractPagination, extractProductList } from '../utils/shop';
 
 const defaultFilters = {
   keyword: '',
@@ -49,7 +49,17 @@ const parseFiltersFromSearchParams = (searchParams) => {
   return parsedFilters;
 };
 
-const buildSearchParams = (filters) => {
+const parsePageFromSearchParams = (searchParams) => {
+  const page = Number.parseInt(searchParams.get('page') || '1', 10);
+
+  if (Number.isNaN(page) || page <= 0) {
+    return 1;
+  }
+
+  return page;
+};
+
+const buildSearchParams = (filters, page = 1) => {
   const params = new URLSearchParams();
   const cleanedFilters = cleanFilterParams(filters);
 
@@ -59,6 +69,10 @@ const buildSearchParams = (filters) => {
     }
     params.set(key, value);
   });
+
+  if (page > 1) {
+    params.set('page', String(page));
+  }
 
   return params;
 };
@@ -78,14 +92,29 @@ function ProductSearchPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 12,
+    total: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
 
   const searchParamString = searchParams.toString();
 
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
-        const response = await productApi.getProducts();
-        setMetadata(getMetadataFromProducts(extractApiData(response, [])));
+        const [categoriesResponse, productsResponse] = await Promise.all([
+          productApi.getCategories(),
+          productApi.getProducts({ page: 1, limit: 1000 }),
+        ]);
+
+        setMetadata({
+          ...getMetadataFromProducts(extractProductList(productsResponse, [])),
+          categories: extractApiData(categoriesResponse, []),
+        });
       } catch {
         setMetadata({ categories: [], brands: [], sizes: [], colors: [] });
       }
@@ -95,18 +124,44 @@ function ProductSearchPage() {
   }, []);
 
   useEffect(() => {
-    const parsedFilters = parseFiltersFromSearchParams(new URLSearchParams(searchParamString));
+    const parsedSearchParams = new URLSearchParams(searchParamString);
+    const parsedFilters = parseFiltersFromSearchParams(parsedSearchParams);
+    const currentPage = parsePageFromSearchParams(parsedSearchParams);
 
     const fetchProducts = async () => {
       try {
         setLoading(true);
         setError('');
+        setFilters(parsedFilters);
 
-        const response = await productApi.getProducts(cleanFilterParams(parsedFilters));
-        setProducts(extractApiData(response, []));
+        const response = await productApi.getProducts({
+          ...cleanFilterParams(parsedFilters),
+          page: currentPage,
+          limit: 12,
+        });
+
+        setProducts(extractProductList(response, []));
+
+        const nextPagination = extractPagination(response, {});
+        setPagination({
+          page: nextPagination.page || currentPage,
+          limit: nextPagination.limit || 12,
+          total: nextPagination.total || 0,
+          totalPages: nextPagination.totalPages || 1,
+          hasNextPage: Boolean(nextPagination.hasNextPage),
+          hasPrevPage: Boolean(nextPagination.hasPrevPage),
+        });
       } catch (apiError) {
         setError(apiError.response?.data?.message || 'Unable to load sneakers for the selected filters.');
         setProducts([]);
+        setPagination({
+          page: 1,
+          limit: 12,
+          total: 0,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        });
       } finally {
         setLoading(false);
       }
@@ -122,7 +177,7 @@ function ProductSearchPage() {
   });
 
   const applyFilters = () => {
-    setSearchParams(buildSearchParams(filters));
+    setSearchParams(buildSearchParams(filters, 1));
     setMobileFiltersOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -136,7 +191,16 @@ function ProductSearchPage() {
   const removeFilter = (key) => {
     const nextFilters = { ...filters, [key]: defaultFilters[key] };
     setFilters(nextFilters);
-    setSearchParams(buildSearchParams(nextFilters));
+    setSearchParams(buildSearchParams(nextFilters, 1));
+  };
+
+  const handlePageChange = (nextPage) => {
+    if (nextPage < 1 || nextPage > pagination.totalPages || nextPage === pagination.page) {
+      return;
+    }
+
+    setSearchParams(buildSearchParams(filters, nextPage));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -161,7 +225,7 @@ function ProductSearchPage() {
         <div className="mb-6 flex items-center justify-between gap-4 lg:hidden">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-orange-600">Product Count</p>
-            <h2 className="text-2xl font-bold text-slate-950">{products.length} sneakers</h2>
+            <h2 className="text-2xl font-bold text-slate-950">{pagination.total} sneakers</h2>
           </div>
           <button type="button" onClick={() => setMobileFiltersOpen((current) => !current)} className="btn-secondary px-5 py-3">
             <FilterOutlined />
@@ -177,7 +241,7 @@ function ProductSearchPage() {
               onApply={applyFilters}
               onReset={resetFilters}
               metadata={metadata}
-              total={products.length}
+              total={pagination.total}
             />
           </div>
 
@@ -186,9 +250,9 @@ function ProductSearchPage() {
               <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-orange-600">Search Results</p>
-                  <h2 className="mt-1 text-2xl font-bold text-slate-950">{products.length} sneakers found</h2>
+                  <h2 className="mt-1 text-2xl font-bold text-slate-950">{pagination.total} sneakers found</h2>
                   <p className="mt-2 text-sm text-slate-500">
-                    Browse premium sneaker picks tailored to your filters and backend product data.
+                    Browse premium sneaker picks tailored to your filters and backend product data. Page {pagination.page} of {pagination.totalPages}.
                   </p>
                 </div>
 
@@ -251,10 +315,42 @@ function ProductSearchPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {products.map((product) => (
-                  <ProductCard key={product._id} product={product} />
-                ))}
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                  {products.map((product) => (
+                    <ProductCard key={product._id} product={product} />
+                  ))}
+                </div>
+
+                <div className="glass-panel flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-bold uppercase tracking-[0.24em] text-orange-600">Pagination</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Showing page {pagination.page} of {pagination.totalPages} with {pagination.limit} products per page.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handlePageChange(pagination.page - 1)}
+                      disabled={!pagination.hasPrevPage}
+                      className={`btn-secondary px-5 py-3 ${!pagination.hasPrevPage ? 'cursor-not-allowed opacity-50 hover:translate-y-0 hover:border-slate-300 hover:text-slate-900' : ''}`}
+                    >
+                      <ArrowLeftOutlined />
+                      Previous
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePageChange(pagination.page + 1)}
+                      disabled={!pagination.hasNextPage}
+                      className={`btn-primary px-5 py-3 ${!pagination.hasNextPage ? 'cursor-not-allowed opacity-50 hover:translate-y-0 hover:bg-orange-600' : ''}`}
+                    >
+                      Next
+                      <ArrowRightOutlined />
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>

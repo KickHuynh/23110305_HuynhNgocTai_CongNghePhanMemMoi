@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRightOutlined, FireFilled, RocketOutlined, SafetyCertificateOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import HorizontalProductCarousel from '../components/HorizontalProductCarousel';
 import ProductSection from '../components/ProductSection';
 import productApi from '../api/productApi';
 import heroSneaker from '../assets/hero.png';
@@ -18,6 +19,8 @@ function HomePage() {
     promotions: [],
     newProducts: [],
     bestSellers: [],
+    topBestSellers: [],
+    topMostViewed: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -28,16 +31,20 @@ function HomePage() {
         setLoading(true);
         setError('');
 
-        const [promotionResponse, newResponse, bestSellerResponse] = await Promise.all([
+        const [promotionResponse, newResponse, bestSellerResponse, topBestSellerResponse, topMostViewedResponse] = await Promise.all([
           productApi.getPromotionProducts(),
           productApi.getNewProducts(),
           productApi.getBestSellerProducts(),
+          productApi.getTopBestSellers(10),
+          productApi.getTopMostViewed(10),
         ]);
 
         setSections({
           promotions: extractApiData(promotionResponse, []),
           newProducts: extractApiData(newResponse, []),
           bestSellers: extractApiData(bestSellerResponse, []),
+          topBestSellers: extractApiData(topBestSellerResponse, []),
+          topMostViewed: extractApiData(topMostViewedResponse, []),
         });
       } catch (apiError) {
         setError(apiError.response?.data?.message || 'Unable to load the SneakerHub home collection right now.');
@@ -120,6 +127,24 @@ function HomePage() {
           ))}
         </div>
       </section>
+
+      <HorizontalProductCarousel
+        title="Top 10 Best Sellers"
+        subtitle="The sneakers customers love the most"
+        products={sections.topBestSellers}
+        loading={loading}
+        error={error}
+        viewAllLink="/products?sort=best_seller"
+      />
+
+      <HorizontalProductCarousel
+        title="Top 10 Most Viewed"
+        subtitle="Trending pairs people are checking out"
+        products={sections.topMostViewed}
+        loading={loading}
+        error={error}
+        viewAllLink="/products?sort=most_viewed"
+      />
 
       <ProductSection
         title="Hot Promotions"

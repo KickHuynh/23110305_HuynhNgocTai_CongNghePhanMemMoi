@@ -3,6 +3,7 @@ import { FilterOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icon
 const sortOptions = [
   { value: 'newest', label: 'Newest arrivals' },
   { value: 'best_seller', label: 'Best sellers' },
+  { value: 'most_viewed', label: 'Most viewed' },
   { value: 'price_asc', label: 'Price: Low to high' },
   { value: 'price_desc', label: 'Price: High to low' },
 ];

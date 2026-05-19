@@ -16,6 +16,30 @@ export const extractApiData = (response, fallback = []) => {
   return fallback;
 };
 
+export const extractProductList = (response, fallback = []) => {
+  const payload = extractApiData(response, fallback);
+
+  if (Array.isArray(payload?.products)) {
+    return payload.products;
+  }
+
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  return fallback;
+};
+
+export const extractPagination = (response, fallback = {}) => {
+  const payload = extractApiData(response, null);
+
+  if (payload?.pagination) {
+    return payload.pagination;
+  }
+
+  return fallback;
+};
+
 export const getUserDisplayName = (user) =>
   user?.fullName || user?.name || user?.username || user?.email || 'Guest';
 
