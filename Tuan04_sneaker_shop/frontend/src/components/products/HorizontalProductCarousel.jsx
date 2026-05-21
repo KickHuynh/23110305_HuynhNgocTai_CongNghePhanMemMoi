@@ -1,6 +1,8 @@
 import { useRef } from 'react';
-import { ArrowLeftOutlined, ArrowRightOutlined, InboxOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
+import EmptyState from '../common/EmptyState';
+import ErrorMessage from '../common/ErrorMessage';
 import ProductCard from './ProductCard';
 
 function HorizontalProductCarousel({
@@ -68,26 +70,22 @@ function HorizontalProductCarousel({
             ))}
           </div>
         ) : error ? (
-          <div className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-[28px] border border-red-100 bg-red-50/70 p-8 text-center">
-            <h3 className="text-2xl font-bold text-slate-950">Unable to load this ranking</h3>
-            <p className="section-copy max-w-xl">{error}</p>
-          </div>
+          <ErrorMessage title="Unable to load this ranking" message={error} minHeight="min-h-64" className="rounded-[28px]" />
         ) : products.length > 0 ? (
           <div ref={scrollContainerRef} className="scrollbar-none flex gap-6 overflow-x-auto scroll-smooth pb-2">
             {products.map((product) => (
-              <div key={product._id} className="min-w-[260px] sm:min-w-[280px] max-w-[280px]">
+              <div key={product._id} className="max-w-[280px] min-w-[260px] sm:min-w-[280px]">
                 <ProductCard product={product} />
               </div>
             ))}
           </div>
         ) : (
-          <div className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-[28px] border border-slate-200 bg-slate-50/70 p-8 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-2xl text-slate-500">
-              <InboxOutlined />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-950">No products available</h3>
-            <p className="section-copy max-w-xl">This ranking will appear here once active products are available from the backend API.</p>
-          </div>
+          <EmptyState
+            title="No products available"
+            description="This ranking will appear here once active products are available from the backend API."
+            minHeight="min-h-64"
+            className="rounded-[28px]"
+          />
         )}
       </div>
     </section>

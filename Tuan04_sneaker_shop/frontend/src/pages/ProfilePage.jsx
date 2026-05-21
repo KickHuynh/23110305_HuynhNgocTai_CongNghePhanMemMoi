@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { CheckCircleFilled, IdcardOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
-import axiosClient from '../api/axiosClient';
+import { Link, useNavigate } from 'react-router-dom';
+import authApi, { clearAuthSession, getStoredToken, setAuthSession } from '../api/authApi';
+import ErrorMessage from '../components/common/ErrorMessage';
 import { extractApiData, getUserDisplayName, getUserRole } from '../utils/shop';
 
 function ProfilePage() {
@@ -11,7 +12,7 @@ function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+    const token = getStoredToken();
 
     if (!token) {
       navigate('/login', { replace: true });
@@ -23,16 +24,14 @@ function ProfilePage() {
         setLoading(true);
         setErrorMessage('');
 
-        const response = await axiosClient.get('/auth/me');
+        const response = await authApi.getCurrentUser();
         const currentUser = extractApiData(response, {}).user;
 
         setUser(currentUser);
-        localStorage.setItem('user', JSON.stringify(currentUser));
+        setAuthSession({ user: currentUser });
       } catch (error) {
         setErrorMessage(error.response?.data?.message || 'Cannot get current user information.');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        clearAuthSession();
       } finally {
         setLoading(false);
       }
@@ -64,13 +63,17 @@ function ProfilePage() {
     return (
       <div className="page-shell">
         <div className="content-shell py-16">
-          <div className="mx-auto max-w-3xl rounded-[36px] border border-red-200 bg-white p-8 text-center shadow-lg shadow-slate-900/5">
-            <h1 className="text-3xl font-bold text-slate-950">Profile unavailable</h1>
-            <p className="mt-4 text-base leading-8 text-slate-500">{errorMessage}</p>
-            <Link to="/login" className="btn-primary mt-6">
-              Back to Login
-            </Link>
-          </div>
+          <ErrorMessage
+            title="Profile unavailable"
+            message={errorMessage}
+            minHeight="min-h-[360px]"
+            className="mx-auto max-w-3xl rounded-[36px]"
+            action={
+              <Link to="/login" className="btn-primary">
+                Back to Login
+              </Link>
+            }
+          />
         </div>
       </div>
     );

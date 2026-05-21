@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { LockOutlined, MailOutlined, RightOutlined } from '@ant-design/icons';
-import axiosClient from '../api/axiosClient';
-import { extractApiData } from '../utils/shop';
+import { Link, useNavigate } from 'react-router-dom';
+import authApi, { extractAuthSession, getStoredToken, setAuthSession } from '../api/authApi';
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -11,9 +10,9 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+    const token = getStoredToken();
     if (token) {
-      navigate('/home', { replace: true });
+      navigate('/', { replace: true });
     }
   }, [navigate]);
 
@@ -29,21 +28,9 @@ function LoginPage() {
       setLoading(true);
       setErrorMessage('');
 
-      const response = await axiosClient.post('/auth/login', formData);
-      const data = extractApiData(response, {});
-      const token = response.data?.token || response.data?.accessToken;
-      const user = data.user || response.data?.user || null;
-
-      if (token) {
-        localStorage.setItem('accessToken', token);
-        localStorage.setItem('token', token);
-      }
-
-      if (user) {
-        localStorage.setItem('user', JSON.stringify(user));
-      }
-
-      navigate('/home', { replace: true });
+      const response = await authApi.login(formData);
+      setAuthSession(extractAuthSession(response));
+      navigate('/', { replace: true });
     } catch (error) {
       setErrorMessage(error.response?.data?.message || 'Login failed. Please try again.');
     } finally {
@@ -81,7 +68,7 @@ function LoginPage() {
             <p className="text-sm font-bold uppercase tracking-[0.28em] text-orange-600">Login</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">Sign in to SneakerHub</h2>
             <p className="mt-3 text-sm leading-7 text-slate-500">
-              Use your current Week 3 account to access the upgraded Sneaker Shop experience.
+              Use your current account to access the upgraded Sneaker Shop experience.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">

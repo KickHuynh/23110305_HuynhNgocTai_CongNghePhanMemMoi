@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const mongoose = require('mongoose');
 
 const createServiceError = (message, statusCode = 500) => {
   const error = new Error(message);
@@ -16,6 +17,16 @@ const parsePositiveInt = (value, fallback) => {
   }
 
   return parsedValue;
+};
+
+const resolveProductFilter = (identifier) => {
+  if (mongoose.Types.ObjectId.isValid(identifier)) {
+    return {
+      $or: [{ _id: identifier }, { slug: identifier }],
+    };
+  }
+
+  return { slug: identifier };
 };
 
 const buildProductQuery = (params) => {
@@ -112,8 +123,8 @@ const getProducts = async (params) => {
 };
 
 const getProductById = async (productId) => {
-  const product = await Product.findByIdAndUpdate(
-    productId,
+  const product = await Product.findOneAndUpdate(
+    resolveProductFilter(productId),
     { $inc: { views: 1 } },
     { new: true }
   );
@@ -168,7 +179,7 @@ const getTopMostViewed = async (limit = 10) => {
 };
 
 const getRelatedProducts = async (productId) => {
-  const product = await Product.findById(productId);
+  const product = await Product.findOne(resolveProductFilter(productId));
 
   if (!product) {
     throw createServiceError('Product not found', 404);

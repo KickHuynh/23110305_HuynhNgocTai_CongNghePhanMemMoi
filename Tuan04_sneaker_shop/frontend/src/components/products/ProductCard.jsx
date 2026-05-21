@@ -1,6 +1,13 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowRightOutlined, StarFilled } from '@ant-design/icons';
-import { createPlaceholderImage, formatCurrency, getPrimaryImage, hasSalePrice } from '../utils/shop';
+import { ArrowRightOutlined, EyeOutlined, FireFilled, StarFilled } from '@ant-design/icons';
+import {
+  createPlaceholderImage,
+  formatCurrency,
+  getPrimaryImage,
+  getProductRoute,
+  hasSalePrice,
+  sanitizeText,
+} from '../../utils/shop';
 
 const getBadges = (product) => {
   const badges = [];
@@ -31,9 +38,14 @@ function ProductCard({ product }) {
   const outOfStock = Number(product?.stock) <= 0;
   const displayPrice = hasSalePrice(product) ? product.salePrice : product.price;
   const formattedViews = Number(product?.views || 0).toLocaleString('vi-VN');
+  const productRoute = getProductRoute(product);
 
   const handleNavigate = () => {
-    navigate(`/products/${product._id}`);
+    if (!productRoute) {
+      return;
+    }
+
+    navigate(productRoute);
   };
 
   return (
@@ -79,9 +91,11 @@ function ProductCard({ product }) {
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="mb-1 text-xs font-bold uppercase tracking-[0.26em] text-orange-600">
-              {product?.brand || 'SneakerHub'}
+              {sanitizeText(product?.brand || 'SneakerHub')}
             </p>
-            <h3 className="line-clamp-2 text-lg font-bold leading-tight text-slate-950">{product?.name}</h3>
+            <h3 className="line-clamp-2 text-lg font-bold leading-tight text-slate-950">
+              {sanitizeText(product?.name)}
+            </h3>
           </div>
           <div className="flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">
             <StarFilled />
@@ -91,15 +105,25 @@ function ProductCard({ product }) {
 
         <div className="mb-5 space-y-2">
           <div className="flex items-center justify-between gap-3 text-sm text-slate-500">
-            <span>{product?.category || 'Lifestyle'}</span>
-            <span>🔥 {product?.sold || 0} sold</span>
+            <span>{sanitizeText(product?.category || 'Lifestyle')}</span>
+            <span className="inline-flex items-center gap-1.5">
+              <FireFilled className="text-orange-500" />
+              {product?.sold || 0} sold
+            </span>
           </div>
           <div className="flex items-center justify-between gap-3 text-sm">
             <span className={`font-semibold ${outOfStock ? 'text-red-500' : 'text-emerald-600'}`}>
               {outOfStock ? 'Out of stock' : `In stock: ${product?.stock || 0}`}
             </span>
-            <span className="text-slate-500">
-              {product?.views !== undefined && product?.views !== null ? `👁 ${formattedViews} views` : `Sizes: ${product?.sizes?.length || 0}`}
+            <span className="inline-flex items-center gap-1.5 text-slate-500">
+              {product?.views !== undefined && product?.views !== null ? (
+                <>
+                  <EyeOutlined />
+                  {formattedViews} views
+                </>
+              ) : (
+                `Sizes: ${product?.sizes?.length || 0}`
+              )}
             </span>
           </div>
         </div>
@@ -120,7 +144,7 @@ function ProductCard({ product }) {
               event.stopPropagation();
               handleNavigate();
             }}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold !text-white transition duration-300 hover:bg-orange-600"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-600 px-4 py-3 text-sm font-bold !text-white transition duration-300 hover:bg-orange-700"
           >
             <span className="!text-white">View Detail</span>
             <ArrowRightOutlined className="!text-white" />

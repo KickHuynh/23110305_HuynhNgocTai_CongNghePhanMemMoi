@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { InboxOutlined, WarningOutlined } from '@ant-design/icons';
-import productApi from '../api/productApi';
-import { extractPagination, extractProductList } from '../utils/shop';
+import productApi from '../../api/productApi';
+import { extractPagination, extractProductList } from '../../utils/shop';
+import EmptyState from '../common/EmptyState';
+import ErrorMessage from '../common/ErrorMessage';
 import ProductCard from './ProductCard';
 
 const INITIAL_PAGINATION = {
@@ -140,24 +141,24 @@ function CategoryProductSection({ category }) {
           ))}
         </div>
       ) : error && products.length === 0 ? (
-        <div className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-[28px] border border-red-100 bg-red-50/70 p-8 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-2xl text-red-500">
-            <WarningOutlined />
-          </div>
-          <h3 className="text-2xl font-bold text-slate-950">Unable to load {category}</h3>
-          <p className="section-copy max-w-xl">{error}</p>
-          <button type="button" onClick={() => loadProducts(1, true)} className="btn-primary">
-            Try again
-          </button>
-        </div>
+        <ErrorMessage
+          title={`Unable to load ${category}`}
+          message={error}
+          minHeight="min-h-64"
+          className="rounded-[28px]"
+          action={
+            <button type="button" onClick={() => loadProducts(1, true)} className="btn-primary">
+              Try again
+            </button>
+          }
+        />
       ) : products.length === 0 ? (
-        <div className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-[28px] border border-slate-200 bg-slate-50/70 p-8 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-2xl text-slate-500">
-            <InboxOutlined />
-          </div>
-          <h3 className="text-2xl font-bold text-slate-950">No products found</h3>
-          <p className="section-copy max-w-xl">This category is active but there are no sneakers to display right now.</p>
-        </div>
+        <EmptyState
+          title="No products found"
+          description="This category is active but there are no sneakers to display right now."
+          minHeight="min-h-64"
+          className="rounded-[28px]"
+        />
       ) : (
         <>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">

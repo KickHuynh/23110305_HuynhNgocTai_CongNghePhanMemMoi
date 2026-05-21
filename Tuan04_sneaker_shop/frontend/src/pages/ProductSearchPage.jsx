@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { ArrowLeftOutlined, ArrowRightOutlined, CloseOutlined, FilterOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
-import { ArrowLeftOutlined, ArrowRightOutlined, CloseOutlined, FilterOutlined, InboxOutlined, WarningOutlined } from '@ant-design/icons';
 import productApi from '../api/productApi';
-import ProductFilter from '../components/ProductFilter';
-import ProductCard from '../components/ProductCard';
+import EmptyState from '../components/common/EmptyState';
+import ErrorMessage from '../components/common/ErrorMessage';
+import ProductCard from '../components/products/ProductCard';
+import ProductFilter from '../components/products/ProductFilter';
 import { cleanFilterParams, extractApiData, extractPagination, extractProductList } from '../utils/shop';
 
 const defaultFilters = {
@@ -291,29 +293,27 @@ function ProductSearchPage() {
                 ))}
               </div>
             ) : error ? (
-              <div className="glass-panel flex min-h-72 flex-col items-center justify-center gap-4 p-8 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-2xl text-red-500">
-                  <WarningOutlined />
-                </div>
-                <h3 className="text-2xl font-bold text-slate-950">Unable to load sneakers</h3>
-                <p className="section-copy max-w-xl">{error}</p>
-                <button type="button" onClick={applyFilters} className="btn-primary">
-                  Try again
-                </button>
-              </div>
+              <ErrorMessage
+                title="Unable to load sneakers"
+                message={error}
+                minHeight="min-h-72"
+                action={
+                  <button type="button" onClick={applyFilters} className="btn-primary">
+                    Try again
+                  </button>
+                }
+              />
             ) : products.length === 0 ? (
-              <div className="glass-panel flex min-h-72 flex-col items-center justify-center gap-4 p-8 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-2xl text-slate-500">
-                  <InboxOutlined />
-                </div>
-                <h3 className="text-2xl font-bold text-slate-950">No products found</h3>
-                <p className="section-copy max-w-xl">
-                  Try adjusting your search keyword, price range, or product options to see more results.
-                </p>
-                <button type="button" onClick={resetFilters} className="btn-secondary">
-                  Reset filters
-                </button>
-              </div>
+              <EmptyState
+                title="No products found"
+                description="Try adjusting your search keyword, price range, or product options to see more results."
+                minHeight="min-h-72"
+                action={
+                  <button type="button" onClick={resetFilters} className="btn-secondary">
+                    Reset filters
+                  </button>
+                }
+              />
             ) : (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">

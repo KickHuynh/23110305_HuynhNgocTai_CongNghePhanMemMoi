@@ -1,47 +1,38 @@
 import { useState } from 'react';
+import { CloseOutlined, LogoutOutlined, MenuOutlined, ShopOutlined, UserOutlined } from '@ant-design/icons';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LogoutOutlined, MenuOutlined, CloseOutlined, UserOutlined, ShopOutlined } from '@ant-design/icons';
-import { getUserDisplayName, getUserRole } from '../utils/shop';
+import { clearAuthSession, getStoredToken, getStoredUser } from '../../api/authApi';
+import { getUserDisplayName, getUserRole } from '../../utils/shop';
 
-function ShopNavbar() {
+const navLinks = [
+  { label: 'Home', to: '/', end: true },
+  { label: 'Products', to: '/products' },
+  { label: 'Categories', to: '/categories' },
+  { label: 'Profile', to: '/profile' },
+];
+
+function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const user = (() => {
-    try {
-      const storedUser = localStorage.getItem('user');
-      return storedUser ? JSON.parse(storedUser) : null;
-    } catch {
-      return null;
-    }
-  })();
-
-  const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setMobileMenuOpen(false);
-    navigate('/login');
-  };
-
-  const navLinks = [
-    { label: 'Home', to: '/home' },
-    { label: 'Products', to: '/products' },
-    { label: 'Categories', to: '/categories' },
-    { label: 'Profile', to: '/profile' },
-  ];
-
+  const user = getStoredUser();
+  const isAuthenticated = Boolean(getStoredToken());
   const authRoute = location.pathname === '/login' || location.pathname === '/register';
   const displayName = getUserDisplayName(user);
   const role = getUserRole(user);
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
+  const handleLogout = () => {
+    clearAuthSession();
+    setMobileMenuOpen(false);
+    navigate('/login');
+  };
+
   return (
     <header className="sticky top-0 z-50 border-b border-white/60 bg-white/85 backdrop-blur-xl">
       <div className="content-shell">
         <div className="flex min-h-20 items-center justify-between gap-4 py-3">
-          <NavLink to="/home" className="flex min-w-0 items-center gap-3">
+          <NavLink to="/" className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-lg shadow-slate-950/20">
               <ShopOutlined className="text-lg" />
             </div>
@@ -58,6 +49,7 @@ function ShopNavbar() {
               <NavLink
                 key={link.to}
                 to={link.to}
+                end={link.end}
                 className={({ isActive }) =>
                   `rounded-full px-4 py-2 text-sm font-bold transition ${
                     isActive
@@ -72,7 +64,7 @@ function ShopNavbar() {
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
-            {user ? (
+            {isAuthenticated ? (
               <>
                 <NavLink
                   to="/profile"
@@ -127,6 +119,7 @@ function ShopNavbar() {
                 <NavLink
                   key={link.to}
                   to={link.to}
+                  end={link.end}
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
                     `rounded-2xl px-4 py-3 text-sm font-bold transition ${
@@ -141,7 +134,7 @@ function ShopNavbar() {
               ))}
             </div>
 
-            {user ? (
+            {isAuthenticated ? (
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-950 text-base font-bold text-white">
@@ -178,4 +171,4 @@ function ShopNavbar() {
   );
 }
 
-export default ShopNavbar;
+export default Navbar;

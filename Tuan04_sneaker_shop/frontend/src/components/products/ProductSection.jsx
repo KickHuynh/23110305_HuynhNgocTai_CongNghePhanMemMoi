@@ -1,5 +1,7 @@
+import { ArrowRightOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
-import { ArrowRightOutlined, InboxOutlined } from '@ant-design/icons';
+import EmptyState from '../common/EmptyState';
+import ErrorMessage from '../common/ErrorMessage';
 import ProductCard from './ProductCard';
 
 function ProductSection({ title, subtitle, products = [], loading = false, error = '', viewAllLink = '' }) {
@@ -38,10 +40,7 @@ function ProductSection({ title, subtitle, products = [], loading = false, error
           ))}
         </div>
       ) : error ? (
-        <div className="glass-panel flex min-h-56 flex-col items-center justify-center gap-3 p-8 text-center">
-          <p className="text-lg font-bold text-slate-950">Unable to load this section</p>
-          <p className="section-copy max-w-xl">{error}</p>
-        </div>
+        <ErrorMessage title="Unable to load this section" message={error} />
       ) : products.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {products.map((product) => (
@@ -49,15 +48,10 @@ function ProductSection({ title, subtitle, products = [], loading = false, error
           ))}
         </div>
       ) : (
-        <div className="glass-panel flex min-h-56 flex-col items-center justify-center gap-4 p-8 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-2xl text-slate-500">
-            <InboxOutlined />
-          </div>
-          <p className="text-lg font-bold text-slate-950">No products available</p>
-          <p className="section-copy max-w-xl">
-            This collection is still being prepared. Please check again in a moment.
-          </p>
-        </div>
+        <EmptyState
+          title="No products available"
+          description="This collection is still being prepared. Please check again in a moment."
+        />
       )}
     </section>
   );

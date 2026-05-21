@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { IdcardOutlined, LockOutlined, MailOutlined, RightOutlined, UserOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
-import axiosClient from '../api/axiosClient';
-import { extractApiData } from '../utils/shop';
+import authApi, { extractAuthSession, getStoredToken, setAuthSession } from '../api/authApi';
 
 function RegisterPage() {
   const navigate = useNavigate();
@@ -16,9 +15,9 @@ function RegisterPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+    const token = getStoredToken();
     if (token) {
-      navigate('/home', { replace: true });
+      navigate('/', { replace: true });
     }
   }, [navigate]);
 
@@ -34,21 +33,9 @@ function RegisterPage() {
       setLoading(true);
       setErrorMessage('');
 
-      const response = await axiosClient.post('/auth/register', formData);
-      const data = extractApiData(response, {});
-      const token = response.data?.token || response.data?.accessToken;
-      const user = data.user || response.data?.user || null;
-
-      if (token) {
-        localStorage.setItem('accessToken', token);
-        localStorage.setItem('token', token);
-      }
-
-      if (user) {
-        localStorage.setItem('user', JSON.stringify(user));
-      }
-
-      navigate('/home', { replace: true });
+      const response = await authApi.register(formData);
+      setAuthSession(extractAuthSession(response));
+      navigate('/', { replace: true });
     } catch (error) {
       setErrorMessage(error.response?.data?.message || 'Register failed. Please try again.');
     } finally {

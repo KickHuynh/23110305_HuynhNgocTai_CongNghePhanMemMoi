@@ -1,8 +1,6 @@
-export const formatCurrency = (value) =>
-  new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-  }).format(Number(value || 0));
+import { formatCurrency } from './formatCurrency';
+
+export { formatCurrency };
 
 export const extractApiData = (response, fallback = []) => {
   if (response?.data?.data !== undefined) {
@@ -55,6 +53,10 @@ export const hasSalePrice = (product) =>
 
 export const getDisplayPrice = (product) =>
   hasSalePrice(product) ? Number(product.salePrice) : Number(product?.price || 0);
+
+export const getProductIdentifier = (product) => product?.slug || product?._id || product?.id || '';
+
+export const getProductRoute = (product) => `/products/${getProductIdentifier(product)}`;
 
 export const createPlaceholderImage = (label = 'SneakerHub') => {
   const safeLabel = String(label)

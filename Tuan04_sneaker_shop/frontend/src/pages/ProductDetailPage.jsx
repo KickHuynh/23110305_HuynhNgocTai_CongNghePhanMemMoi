@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeftOutlined, CheckCircleFilled, FireFilled, ShoppingCartOutlined, StarFilled } from '@ant-design/icons';
+import { ArrowLeftOutlined, CheckCircleFilled, ShoppingCartOutlined, StarFilled } from '@ant-design/icons';
 import { message } from 'antd';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import ErrorMessage from '../components/common/ErrorMessage';
+import QuantitySelector from '../components/common/QuantitySelector';
+import ProductImageSwiper from '../components/products/ProductImageSwiper';
+import ProductSection from '../components/products/ProductSection';
 import productApi from '../api/productApi';
-import ProductImageSwiper from '../components/ProductImageSwiper';
-import ProductSection from '../components/ProductSection';
-import QuantitySelector from '../components/QuantitySelector';
 import { extractApiData, formatCurrency, hasSalePrice, sanitizeText } from '../utils/shop';
 
 const renderStars = (rating = 5) =>
@@ -15,7 +16,7 @@ const renderStars = (rating = 5) =>
 
 function ProductDetailPage() {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { productId } = useParams();
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,8 +33,8 @@ function ProductDetailPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
         const [productResponse, relatedResponse] = await Promise.all([
-          productApi.getProductById(id),
-          productApi.getRelatedProducts(id),
+          productApi.getProductById(productId),
+          productApi.getRelatedProducts(productId),
         ]);
 
         const fetchedProduct = extractApiData(productResponse, null);
@@ -51,10 +52,10 @@ function ProductDetailPage() {
       }
     };
 
-    if (id) {
+    if (productId) {
       fetchProductDetails();
     }
-  }, [id]);
+  }, [productId]);
 
   if (loading) {
     return (
@@ -84,19 +85,17 @@ function ProductDetailPage() {
     return (
       <div className="page-shell">
         <div className="content-shell py-16">
-          <div className="glass-panel flex min-h-[420px] flex-col items-center justify-center gap-5 p-8 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-50 text-3xl text-red-500">
-              <FireFilled />
-            </div>
-            <h1 className="text-3xl font-bold text-slate-950">{error || 'Product not found'}</h1>
-            <p className="section-copy max-w-xl">
-              The sneaker you are trying to view is unavailable or may have been removed from the catalog.
-            </p>
-            <button type="button" onClick={() => navigate('/products')} className="btn-primary">
-              <ArrowLeftOutlined />
-              Back to Products
-            </button>
-          </div>
+          <ErrorMessage
+            title={error || 'Product not found'}
+            message="The sneaker you are trying to view is unavailable or may have been removed from the catalog."
+            minHeight="min-h-[420px]"
+            action={
+              <button type="button" onClick={() => navigate('/products')} className="btn-primary">
+                <ArrowLeftOutlined />
+                Back to Products
+              </button>
+            }
+          />
         </div>
       </div>
     );
@@ -125,7 +124,7 @@ function ProductDetailPage() {
     <div className="page-shell pb-16">
       <div className="content-shell py-8">
         <div className="mb-6 flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-500">
-          <Link to="/home" className="transition hover:text-orange-600">
+          <Link to="/" className="transition hover:text-orange-600">
             Home
           </Link>
           <span>/</span>

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRightOutlined, FireFilled, RocketOutlined, SafetyCertificateOutlined, ThunderboltOutlined } from '@ant-design/icons';
-import HorizontalProductCarousel from '../components/HorizontalProductCarousel';
-import ProductSection from '../components/ProductSection';
+import HorizontalProductCarousel from '../components/products/HorizontalProductCarousel';
+import ProductSection from '../components/products/ProductSection';
 import productApi from '../api/productApi';
 import heroSneaker from '../assets/hero.png';
 import { extractApiData } from '../utils/shop';

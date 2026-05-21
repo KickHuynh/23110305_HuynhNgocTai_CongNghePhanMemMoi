@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { AppstoreOutlined, WarningOutlined } from '@ant-design/icons';
+import { AppstoreOutlined } from '@ant-design/icons';
 import productApi from '../api/productApi';
-import CategoryProductSection from '../components/CategoryProductSection';
+import EmptyState from '../components/common/EmptyState';
+import ErrorMessage from '../components/common/ErrorMessage';
+import CategoryProductSection from '../components/products/CategoryProductSection';
 import { extractApiData } from '../utils/shop';
 
 function CategoryProductsPage() {
@@ -70,18 +72,13 @@ function CategoryProductsPage() {
             </div>
           ))
         ) : error ? (
-          <div className="glass-panel flex min-h-72 flex-col items-center justify-center gap-4 p-8 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-2xl text-red-500">
-              <WarningOutlined />
-            </div>
-            <h2 className="text-3xl font-bold text-slate-950">Unable to load categories</h2>
-            <p className="section-copy max-w-xl">{error}</p>
-          </div>
+          <ErrorMessage title="Unable to load categories" message={error} minHeight="min-h-72" />
         ) : categories.length === 0 ? (
-          <div className="glass-panel flex min-h-72 flex-col items-center justify-center gap-4 p-8 text-center">
-            <h2 className="text-3xl font-bold text-slate-950">No categories found</h2>
-            <p className="section-copy max-w-xl">There are no active product categories available from the backend API yet.</p>
-          </div>
+          <EmptyState
+            title="No categories found"
+            description="There are no active product categories available from the backend API yet."
+            minHeight="min-h-72"
+          />
         ) : (
           categories.map((category) => <CategoryProductSection key={category} category={category} />)
         )}

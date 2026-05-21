@@ -4,7 +4,7 @@ import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import { createPlaceholderImage } from '../utils/shop';
+import { createPlaceholderImage } from '../../utils/shop';
 
 function ProductImageSwiper({ images = [] }) {
   const normalizedImages = images.length > 0 ? images : [createPlaceholderImage('SneakerHub')];
