@@ -120,10 +120,10 @@ function ProductCard({ product }) {
               event.stopPropagation();
               handleNavigate();
             }}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold text-white transition duration-300 hover:bg-orange-600"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold !text-white transition duration-300 hover:bg-orange-600"
           >
-            View Detail
-            <ArrowRightOutlined />
+            <span className="!text-white">View Detail</span>
+            <ArrowRightOutlined className="!text-white" />
           </button>
         </div>
       </div>

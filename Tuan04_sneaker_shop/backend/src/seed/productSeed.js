@@ -273,8 +273,17 @@ const products = [
 
 const VND_PRICE_MULTIPLIER = 10000;
 
+const generateSlug = (name) => {
+  return name
+    .toLowerCase()
+    .replace(/'/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+};
+
 const normalizedProducts = products.map((product) => ({
   ...product,
+  slug: generateSlug(product.name),
   price: product.price * VND_PRICE_MULTIPLIER,
   salePrice: product.salePrice * VND_PRICE_MULTIPLIER,
 }));

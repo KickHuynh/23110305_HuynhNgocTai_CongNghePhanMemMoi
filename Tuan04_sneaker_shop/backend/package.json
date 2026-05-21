@@ -1,13 +1,12 @@
 {
-  "name": "week03-fullstack-backend",
+  "name": "sneaker-shop-backend",
   "version": "1.0.0",
-  "description": "Backend API for Week 03 FullStack ExpressJS ReactJS MongoDB",
+  "description": "Backend API for Sneaker Shop",
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon ./src/server.js",
     "start": "node ./src/server.js",
-    "seed:products": "node src/seed/productSeed.js"
-  },
+    "seed": "node src/seed/productSeed.js"  },
   "keywords": [
     "expressjs",
     "mongodb",
