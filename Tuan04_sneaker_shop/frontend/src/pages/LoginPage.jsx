@@ -1,18 +1,30 @@
 import { useEffect, useState } from 'react';
 import { LockOutlined, MailOutlined, RightOutlined } from '@ant-design/icons';
-import { Link, useNavigate } from 'react-router-dom';
-import authApi, { extractAuthSession, getStoredToken, setAuthSession } from '../api/authApi';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import authApi, {
+  extractAuthSession,
+  getProfileRouteByRole,
+  getStoredToken,
+  getStoredUser,
+  resolveAuthRedirect,
+  setAuthSession,
+  setPendingVerificationEmail,
+} from '../api/authApi';
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [errorMessage, setErrorMessage] = useState('');
+  const [infoMessage, setInfoMessage] = useState(location.state?.message || '');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const token = getStoredToken();
     if (token) {
-      navigate('/', { replace: true });
+      navigate(getProfileRouteByRole(getStoredUser()?.role), { replace: true });
     }
   }, [navigate]);
 
@@ -24,14 +36,52 @@ function LoginPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    if (!emailRegex.test(formData.email.trim().toLowerCase())) {
+      setErrorMessage('Please enter a valid email address.');
+      return;
+    }
+
+    if (!formData.password) {
+      setErrorMessage('Password is required.');
+      return;
+    }
+
     try {
       setLoading(true);
       setErrorMessage('');
+      setInfoMessage('');
 
       const response = await authApi.login(formData);
-      setAuthSession(extractAuthSession(response));
-      navigate('/', { replace: true });
+      const session = extractAuthSession(response);
+
+      setAuthSession(session);
+      navigate(
+        resolveAuthRedirect(
+          session.redirectUrl,
+          getProfileRouteByRole(session.user?.role)
+        ),
+        { replace: true }
+      );
     } catch (error) {
+      const errorCode = error.response?.data?.code;
+      const shouldVerifyEmail =
+        errorCode === 'EMAIL_NOT_VERIFIED' ||
+        error.response?.data?.data?.requiresEmailVerification === true;
+
+      if (shouldVerifyEmail) {
+        const email = error.response?.data?.data?.email || formData.email.trim().toLowerCase();
+
+        setPendingVerificationEmail(email);
+        navigate('/verify-otp', {
+          state: {
+            email,
+            from: 'login',
+            message: error.response?.data?.message || 'Please verify your email before login.',
+          },
+        });
+        return;
+      }
+
       setErrorMessage(error.response?.data?.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
@@ -116,13 +166,26 @@ function LoginPage() {
                 </div>
               )}
 
+              {infoMessage && (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+                  {infoMessage}
+                </div>
+              )}
+
               <button type="submit" disabled={loading} className="btn-primary flex w-full justify-center rounded-2xl px-5 py-4 disabled:cursor-not-allowed disabled:opacity-70">
                 {loading ? 'Signing in...' : 'Login'}
                 {!loading && <RightOutlined />}
               </button>
             </form>
 
-            <p className="mt-6 text-sm text-slate-500">
+            <p className="mt-4 text-sm text-slate-500">
+              Forgot your password?{' '}
+              <Link to="/forgot-password" className="font-bold text-orange-600 transition hover:text-orange-700">
+                Reset it here
+              </Link>
+            </p>
+
+            <p className="mt-2 text-sm text-slate-500">
               Do not have an account?{' '}
               <Link to="/register" className="font-bold text-orange-600 transition hover:text-orange-700">
                 Register here

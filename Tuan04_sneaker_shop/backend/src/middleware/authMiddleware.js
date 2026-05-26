@@ -31,7 +31,7 @@ const protect = async (req, res, next) => {
     }
 
     req.user = currentUser;
-    next();
+    return next();
   } catch (error) {
     return res.status(401).json({
       success: false,
@@ -40,6 +40,20 @@ const protect = async (req, res, next) => {
   }
 };
 
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to access this resource',
+      });
+    }
+
+    return next();
+  };
+};
+
 module.exports = {
   protect,
+  authorize,
 };

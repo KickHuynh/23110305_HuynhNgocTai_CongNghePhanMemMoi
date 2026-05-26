@@ -1,12 +1,28 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
+import { getProfileRouteByRole, getStoredToken, getStoredUser } from '../api/authApi';
+import AdminProfilePage from '../pages/AdminProfilePage';
 import CategoryProductsPage from '../pages/CategoryProductsPage';
+import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import HomePage from '../pages/HomePage';
 import LoginPage from '../pages/LoginPage';
 import ProductDetailPage from '../pages/ProductDetailPage';
 import ProductSearchPage from '../pages/ProductSearchPage';
 import ProfilePage from '../pages/ProfilePage';
 import RegisterPage from '../pages/RegisterPage';
+import ResetPasswordPage from '../pages/ResetPasswordPage';
+import VerifyOtpPage from '../pages/VerifyOtpPage';
+import ProtectedRoute from './ProtectedRoute';
+
+function ProfileRouteRedirect() {
+  const token = getStoredToken();
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Navigate to={getProfileRouteByRole(getStoredUser()?.role)} replace />;
+}
 
 function AppRoutes() {
   return (
@@ -20,7 +36,17 @@ function AppRoutes() {
         <Route path="/products/categories" element={<CategoryProductsPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/verify-otp" element={<VerifyOtpPage />} />
+        <Route path="/verify-email" element={<Navigate to="/verify-otp" replace />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/profile" element={<ProfileRouteRedirect />} />
+        <Route element={<ProtectedRoute allowedRoles={['student', 'user']} />}>
+          <Route path="/user/profile" element={<ProfilePage />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+          <Route path="/admin/profile" element={<AdminProfilePage />} />
+        </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

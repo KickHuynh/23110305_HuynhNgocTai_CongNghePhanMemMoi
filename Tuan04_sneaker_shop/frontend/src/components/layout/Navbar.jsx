@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { CloseOutlined, LogoutOutlined, MenuOutlined, ShopOutlined, UserOutlined } from '@ant-design/icons';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { clearAuthSession, getStoredToken, getStoredUser } from '../../api/authApi';
+import {
+  clearAuthSession,
+  getProfileRouteByRole,
+  getStoredToken,
+  getStoredUser,
+} from '../../api/authApi';
 import { getUserDisplayName, getUserRole } from '../../utils/shop';
-
-const navLinks = [
-  { label: 'Home', to: '/', end: true },
-  { label: 'Products', to: '/products' },
-  { label: 'Categories', to: '/categories' },
-  { label: 'Profile', to: '/profile' },
-];
 
 function Navbar() {
   const navigate = useNavigate();
@@ -17,7 +15,20 @@ function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const user = getStoredUser();
   const isAuthenticated = Boolean(getStoredToken());
-  const authRoute = location.pathname === '/login' || location.pathname === '/register';
+  const profilePath = getProfileRouteByRole(user?.role);
+  const navLinks = [
+    { label: 'Home', to: '/', end: true },
+    { label: 'Products', to: '/products' },
+    { label: 'Categories', to: '/categories' },
+    { label: 'Profile', to: profilePath },
+  ];
+  const authRoute =
+    location.pathname === '/login' ||
+    location.pathname === '/register' ||
+    location.pathname === '/verify-email' ||
+    location.pathname === '/verify-otp' ||
+    location.pathname === '/forgot-password' ||
+    location.pathname === '/reset-password';
   const displayName = getUserDisplayName(user);
   const role = getUserRole(user);
   const avatarLetter = displayName.charAt(0).toUpperCase();
@@ -67,7 +78,7 @@ function Navbar() {
             {isAuthenticated ? (
               <>
                 <NavLink
-                  to="/profile"
+                  to={profilePath}
                   className="flex max-w-[280px] items-center gap-3 rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm transition hover:border-orange-200 hover:shadow-md"
                 >
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-bold text-white">

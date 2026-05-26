@@ -37,6 +37,31 @@ const userSchema = new mongoose.Schema(
       enum: ['student', 'admin'],
       default: 'student',
     },
+
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    emailVerificationOtp: {
+      type: String,
+      select: false,
+    },
+
+    emailVerificationOtpExpires: {
+      type: Date,
+      select: false,
+    },
+
+    passwordResetOtp: {
+      type: String,
+      select: false,
+    },
+
+    passwordResetOtpExpires: {
+      type: Date,
+      select: false,
+    },
   },
   {
     timestamps: true,

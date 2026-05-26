@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react';
 import { IdcardOutlined, LockOutlined, MailOutlined, RightOutlined, UserOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
-import authApi, { extractAuthSession, getStoredToken, setAuthSession } from '../api/authApi';
+import authApi, {
+  getProfileRouteByRole,
+  getStoredToken,
+  getStoredUser,
+  setPendingVerificationEmail,
+} from '../api/authApi';
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function RegisterPage() {
   const navigate = useNavigate();
@@ -17,7 +24,7 @@ function RegisterPage() {
   useEffect(() => {
     const token = getStoredToken();
     if (token) {
-      navigate('/', { replace: true });
+      navigate(getProfileRouteByRole(getStoredUser()?.role), { replace: true });
     }
   }, [navigate]);
 
@@ -29,13 +36,45 @@ function RegisterPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    if (!formData.fullName.trim()) {
+      setErrorMessage('Full name is required.');
+      return;
+    }
+
+    if (!emailRegex.test(formData.email.trim().toLowerCase())) {
+      setErrorMessage('Please enter a valid email address.');
+      return;
+    }
+
+    if (!formData.studentId.trim()) {
+      setErrorMessage('Student ID is required.');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters.');
+      return;
+    }
+
     try {
       setLoading(true);
       setErrorMessage('');
 
       const response = await authApi.register(formData);
-      setAuthSession(extractAuthSession(response));
-      navigate('/', { replace: true });
+      const email =
+        response?.data?.verification?.email ||
+        response?.data?.data?.user?.email ||
+        formData.email.trim().toLowerCase();
+
+      setPendingVerificationEmail(email);
+      navigate('/verify-otp', {
+        replace: true,
+        state: {
+          email,
+          from: 'register',
+          message: response?.data?.message || 'Verification OTP sent to your email.',
+        },
+      });
     } catch (error) {
       setErrorMessage(error.response?.data?.message || 'Register failed. Please try again.');
     } finally {

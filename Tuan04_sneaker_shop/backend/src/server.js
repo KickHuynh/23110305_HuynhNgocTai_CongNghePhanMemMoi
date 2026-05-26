@@ -16,7 +16,14 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/', (req, res) => {
   return res.status(200).json({
     success: true,
-    message: 'Week 03 FullStack API is running',
+    message: 'Sneaker Shop API is running',
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: 'Sneaker Shop API is running',
   });
 });
 

@@ -1,15 +1,39 @@
 import { useEffect, useState } from 'react';
-import { CheckCircleFilled, IdcardOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
+import {
+  CheckCircleFilled,
+  CloseOutlined,
+  EditOutlined,
+  IdcardOutlined,
+  MailOutlined,
+  SaveOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
-import authApi, { clearAuthSession, getStoredToken, setAuthSession } from '../api/authApi';
+import authApi, {
+  clearAuthSession,
+  getStoredToken,
+  setAuthSession,
+} from '../api/authApi';
 import ErrorMessage from '../components/common/ErrorMessage';
 import { extractApiData, getUserDisplayName, getUserRole } from '../utils/shop';
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const createProfileForm = (profile = {}) => ({
+  fullName: profile.fullName || '',
+  email: profile.email || '',
+  studentId: profile.studentId || '',
+});
 
 function ProfilePage() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [formData, setFormData] = useState(createProfileForm());
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const token = getStoredToken();
@@ -28,9 +52,13 @@ function ProfilePage() {
         const currentUser = extractApiData(response, {}).user;
 
         setUser(currentUser);
+        setFormData(createProfileForm(currentUser));
         setAuthSession({ user: currentUser });
       } catch (error) {
-        setErrorMessage(error.response?.data?.message || 'Cannot get current user information.');
+        setErrorMessage(
+          error.response?.data?.message ||
+            'Cannot get current user information.'
+        );
         clearAuthSession();
       } finally {
         setLoading(false);
@@ -39,6 +67,71 @@ function ProfilePage() {
 
     fetchCurrentUser();
   }, [navigate]);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setFormData((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  };
+
+  const handleStartEditing = () => {
+    setErrorMessage('');
+    setSuccessMessage('');
+    setFormData(createProfileForm(user));
+    setIsEditing(true);
+  };
+
+  const handleCancelEditing = () => {
+    setErrorMessage('');
+    setSuccessMessage('');
+    setFormData(createProfileForm(user));
+    setIsEditing(false);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!formData.fullName.trim()) {
+      setErrorMessage('Full name is required.');
+      return;
+    }
+
+    if (!emailRegex.test(formData.email.trim().toLowerCase())) {
+      setErrorMessage('Please enter a valid email address.');
+      return;
+    }
+
+    if (!formData.studentId.trim()) {
+      setErrorMessage('Student ID is required.');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setErrorMessage('');
+      setSuccessMessage('');
+
+      const response = await authApi.updateProfile(formData);
+      const updatedUser = extractApiData(response, {}).user;
+
+      setUser(updatedUser);
+      setFormData(createProfileForm(updatedUser));
+      setAuthSession({ user: updatedUser });
+      setIsEditing(false);
+      setSuccessMessage(
+        response?.data?.message || 'Profile updated successfully.'
+      );
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message || 'Cannot update profile right now.'
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -59,7 +152,7 @@ function ProfilePage() {
     );
   }
 
-  if (errorMessage) {
+  if (errorMessage && !user) {
     return (
       <div className="page-shell">
         <div className="content-shell py-16">
@@ -81,61 +174,185 @@ function ProfilePage() {
 
   const displayName = getUserDisplayName(user);
   const role = getUserRole(user);
+  const hasProfileChanges =
+    user &&
+    (formData.fullName.trim() !== (user.fullName || '').trim() ||
+      formData.email.trim().toLowerCase() !== (user.email || '').trim().toLowerCase() ||
+      formData.studentId.trim() !== (user.studentId || '').trim());
 
   return (
     <div className="page-shell">
       <div className="content-shell py-12 sm:py-16">
         <div className="mx-auto max-w-5xl overflow-hidden rounded-[36px] border border-white/70 bg-white shadow-2xl shadow-slate-900/10">
           <div className="bg-[radial-gradient(circle_at_top_left,_rgba(255,69,0,0.22),_transparent_20%),linear-gradient(135deg,_#020617_0%,_#111827_65%,_#1f2937_100%)] px-6 py-10 text-white sm:px-10">
-            <p className="text-sm font-bold uppercase tracking-[0.34em] text-orange-300">Profile Overview</p>
+            <p className="text-sm font-bold uppercase tracking-[0.34em] text-orange-300">
+              Profile Overview
+            </p>
             <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/10 text-3xl font-bold backdrop-blur">
                   {displayName.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{displayName}</h1>
-                  <p className="mt-2 text-sm font-semibold uppercase tracking-[0.28em] text-orange-300">{role}</p>
+                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                    {displayName}
+                  </h1>
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-orange-300">
+                      {role}
+                    </p>
+                    <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.22em] text-emerald-200">
+                      <CheckCircleFilled />
+                      {user?.isEmailVerified ? 'Email verified' : 'Verification pending'}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <Link to="/products" className="btn-secondary border-white/15 bg-white/10 text-white hover:border-orange-300 hover:text-orange-300">
+              <Link
+                to="/products"
+                className="btn-secondary border-white/15 bg-white/10 text-white hover:border-orange-300 hover:text-orange-300"
+              >
                 Continue shopping
               </Link>
             </div>
           </div>
 
-          <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-6">
-              <h2 className="text-2xl font-bold text-slate-950">Account Details</h2>
-              <div className="mt-6 space-y-4">
-                <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white">
-                    <UserOutlined />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-500">Full name</p>
-                    <p className="text-base font-bold text-slate-950">{user?.fullName}</p>
-                  </div>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-950">
+                    Account Details
+                  </h2>
+                  <p className="mt-2 text-sm leading-7 text-slate-500">
+                    Edit your personal information and keep the local session in sync
+                    with the backend profile API.
+                  </p>
                 </div>
-                <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white">
-                    <MailOutlined />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-500">Email</p>
-                    <p className="text-base font-bold text-slate-950">{user?.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white">
-                    <IdcardOutlined />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-500">Student ID</p>
-                    <p className="text-base font-bold text-slate-950">{user?.studentId}</p>
-                  </div>
-                </div>
+
+                {isEditing ? (
+                  <button
+                    type="button"
+                    onClick={handleCancelEditing}
+                    className="btn-secondary justify-center"
+                  >
+                    <CloseOutlined />
+                    Cancel
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleStartEditing}
+                    className="btn-secondary justify-center"
+                  >
+                    <EditOutlined />
+                    Edit profile
+                  </button>
+                )}
               </div>
+
+              <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+                <div>
+                  <label
+                    htmlFor="fullName"
+                    className="mb-2 block text-sm font-bold text-slate-900"
+                  >
+                    Full name
+                  </label>
+                  <div className="relative">
+                    <UserOutlined className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      id="fullName"
+                      name="fullName"
+                      type="text"
+                      required
+                      minLength={2}
+                      value={formData.fullName}
+                      onChange={handleChange}
+                      disabled={!isEditing || saving}
+                      className="field-input pl-11 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="mb-2 block text-sm font-bold text-slate-900"
+                  >
+                    Email
+                  </label>
+                  <div className="relative">
+                    <MailOutlined className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={handleChange}
+                      disabled={!isEditing || saving}
+                      className="field-input pl-11 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="studentId"
+                    className="mb-2 block text-sm font-bold text-slate-900"
+                  >
+                    Student ID
+                  </label>
+                  <div className="relative">
+                    <IdcardOutlined className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      id="studentId"
+                      name="studentId"
+                      type="text"
+                      required
+                      value={formData.studentId}
+                      onChange={handleChange}
+                      disabled={!isEditing || saving}
+                      className="field-input pl-11 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+                    />
+                  </div>
+                </div>
+
+                {successMessage && (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+                    {successMessage}
+                  </div>
+                )}
+
+                {errorMessage && user && (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                    {errorMessage}
+                  </div>
+                )}
+
+                {isEditing && (
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <button
+                      type="submit"
+                      disabled={saving || !hasProfileChanges}
+                      className="btn-primary justify-center disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      <SaveOutlined />
+                      {saving ? 'Saving...' : 'Save changes'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelEditing}
+                      disabled={saving}
+                      className="btn-secondary justify-center disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      <CloseOutlined />
+                      Cancel changes
+                    </button>
+                  </div>
+                )}
+              </form>
             </div>
 
             <div className="rounded-[28px] border border-slate-200 bg-white p-6">
@@ -147,14 +364,30 @@ function ProfilePage() {
                     <p className="font-bold">Authenticated successfully</p>
                   </div>
                   <p className="mt-2 text-sm leading-7 text-emerald-700/80">
-                    Profile data is loaded from your ExpressJS API and MongoDB database through the existing JWT flow.
+                    Profile data is loaded from your ExpressJS API and MongoDB
+                    database through the existing JWT flow.
                   </p>
                 </div>
                 <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Current role</p>
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    Current role
+                  </p>
                   <p className="mt-2 text-2xl font-bold text-slate-950">{role}</p>
                   <p className="mt-2 text-sm leading-7 text-slate-500">
-                    Login and profile functions remain intact while the Sneaker Shop UI has been upgraded for Week 4.
+                    The frontend now supports viewing and editing the same profile
+                    fields exposed by `PUT /auth/me`.
+                  </p>
+                </div>
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    Verification state
+                  </p>
+                  <p className="mt-2 text-2xl font-bold text-slate-950">
+                    {user?.isEmailVerified ? 'Verified' : 'Pending'}
+                  </p>
+                  <p className="mt-2 text-sm leading-7 text-slate-500">
+                    Email verification status is returned from the backend and kept in
+                    the stored user session after each refresh or profile update.
                   </p>
                 </div>
               </div>
