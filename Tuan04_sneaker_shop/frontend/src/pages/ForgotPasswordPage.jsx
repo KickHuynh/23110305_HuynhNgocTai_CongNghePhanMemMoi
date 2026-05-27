@@ -30,7 +30,7 @@ function ForgotPasswordPage() {
     const normalizedEmail = email.trim().toLowerCase();
 
     if (!emailRegex.test(normalizedEmail)) {
-      setErrorMessage('Please enter a valid email address.');
+      setErrorMessage('Vui lòng nhập email hợp lệ.');
       return;
     }
 
@@ -45,14 +45,11 @@ function ForgotPasswordPage() {
         replace: true,
         state: {
           email: normalizedEmail,
-          message: response?.data?.message || 'Password reset OTP sent to your email.',
+          message: response?.data?.message || 'Mã OTP đặt lại mật khẩu đã được gửi đến email của bạn.',
         },
       });
     } catch (error) {
-      setErrorMessage(
-        error.response?.data?.message ||
-          'Cannot send password reset OTP right now.'
-      );
+      setErrorMessage(error.response?.data?.message || 'Hiện không thể gửi mã OTP đặt lại mật khẩu.');
     } finally {
       setLoading(false);
     }
@@ -64,15 +61,12 @@ function ForgotPasswordPage() {
         <div className="mx-auto grid max-w-6xl gap-8 overflow-hidden rounded-[36px] border border-white/70 bg-white shadow-2xl shadow-slate-900/10 lg:grid-cols-[1fr_440px]">
           <div className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(255,69,0,0.25),_transparent_24%),linear-gradient(135deg,_#020617_0%,_#111827_58%,_#1f2937_100%)] px-6 py-10 text-white sm:px-10 lg:px-12 lg:py-14">
             <div className="relative z-10 max-w-xl">
-              <p className="text-sm font-bold uppercase tracking-[0.34em] text-orange-300">
-                Password Recovery
-              </p>
+              <p className="text-sm font-bold uppercase tracking-[0.34em] text-orange-300">Khôi phục mật khẩu</p>
               <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
-                Request an OTP to reset your password.
+                Yêu cầu mã OTP để đặt lại mật khẩu.
               </h1>
               <p className="mt-5 text-base leading-8 text-slate-300">
-                The backend already supports email-based password reset. This page
-                simply connects the current SneakerHub UI to that API flow.
+                Backend đã hỗ trợ reset mật khẩu qua email. Trang này chỉ kết nối giao diện SneakerHub với API hiện tại.
               </p>
             </div>
           </div>
@@ -81,12 +75,9 @@ function ForgotPasswordPage() {
             <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-2xl text-orange-600">
               <SafetyCertificateOutlined />
             </div>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
-              Forgot password
-            </h2>
+            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">Quên mật khẩu</h2>
             <p className="mt-3 text-sm leading-7 text-slate-500">
-              Enter your registered email and we will send a 6-digit OTP for password
-              reset.
+              Nhập email đã đăng ký và hệ thống sẽ gửi mã OTP 6 số để đặt lại mật khẩu.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
@@ -120,18 +111,15 @@ function ForgotPasswordPage() {
                 disabled={loading}
                 className="btn-primary flex w-full justify-center rounded-2xl px-5 py-4 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {loading ? 'Sending OTP...' : 'Send reset OTP'}
+                {loading ? 'Đang gửi OTP...' : 'Gửi OTP đặt lại mật khẩu'}
                 {!loading && <RightOutlined />}
               </button>
             </form>
 
             <p className="mt-6 text-sm text-slate-500">
-              Remembered your password?{' '}
-              <Link
-                to="/login"
-                className="font-bold text-orange-600 transition hover:text-orange-700"
-              >
-                Back to login
+              Đã nhớ mật khẩu?{' '}
+              <Link to="/login" className="font-bold text-orange-600 transition hover:text-orange-700">
+                Quay lại đăng nhập
               </Link>
             </p>
           </div>

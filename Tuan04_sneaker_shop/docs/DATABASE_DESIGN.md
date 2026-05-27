@@ -66,35 +66,69 @@ Notes:
 - Product detail lookup now supports either `_id` or `slug`.
 - Product listing APIs only return active products.
 
-## Planned collections
+## Additional implemented collections
 
-The following collections are planned for future phases and are not implemented yet.
+### `carts`
 
-### `carts` planned
+Purpose:
 
-Expected purpose:
+- Persist one MongoDB-backed cart per user before checkout.
 
-- Track products a user intends to purchase before checkout.
+Main fields:
 
-Potential future fields:
+- `user`: ObjectId, ref `users`, unique
+- `items`: array of cart items
+- `items.product`: ObjectId, ref `products`
+- `items.name`: string snapshot
+- `items.image`: string snapshot
+- `items.price`: number snapshot using `salePrice` when active
+- `items.size`: string
+- `items.color`: string
+- `items.quantity`: number, minimum `1`
+- `items.stockSnapshot`: number
+- `totalItems`: number
+- `subtotal`: number
+- `createdAt`: date
+- `updatedAt`: date
 
-- `userId`
-- `items`
-- `totalQuantity`
-- `updatedAt`
+Notes:
 
-### `orders` planned
+- Cart item uniqueness is handled in service logic by `product + size + color`.
+- Totals are recalculated in the service layer before saving.
 
-Expected purpose:
+### `orders`
 
-- Persist completed checkout and order history data.
+Purpose:
 
-Potential future fields:
+- Persist completed COD checkout data and user order history.
 
-- `userId`
-- `orderItems`
-- `shippingInfo`
-- `paymentStatus`
-- `orderStatus`
-- `totalPrice`
-- `createdAt`
+Main fields:
+
+- `user`: ObjectId, ref `users`
+- `items`: array of order item snapshots
+- `shippingAddress.fullName`: string
+- `shippingAddress.phone`: string
+- `shippingAddress.addressLine`: string
+- `shippingAddress.ward`: string
+- `shippingAddress.district`: string
+- `shippingAddress.city`: string
+- `shippingAddress.note`: string
+- `payment.method`: enum `COD`
+- `payment.status`: enum `unpaid | paid`
+- `pricing.subtotal`: number
+- `pricing.shippingFee`: number
+- `pricing.discount`: number
+- `pricing.total`: number
+- `status`: enum `new | confirmed | preparing | shipping | delivered | cancelled | cancel_requested`
+- `statusHistory`: array of status timeline entries
+- `cancelInfo.reason`: string
+- `cancelInfo.requestedAt`: date
+- `cancelInfo.cancelledAt`: date
+- `createdAt`: date
+- `updatedAt`: date
+
+Notes:
+
+- Product stock is reduced when the order is created and restored if the order is cancelled.
+- Orders older than 30 minutes in `new` status can be auto-confirmed by the backend interval job.
+- `cancel_requested` is used when the order is already being prepared and the user asks to cancel.

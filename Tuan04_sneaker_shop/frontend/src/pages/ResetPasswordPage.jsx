@@ -59,17 +59,17 @@ function ResetPasswordPage() {
     const normalizedEmail = formData.email.trim().toLowerCase();
 
     if (!emailRegex.test(normalizedEmail)) {
-      setErrorMessage('Please enter a valid email address.');
+      setErrorMessage('Vui lòng nhập email hợp lệ.');
       return;
     }
 
     if (!otpRegex.test(formData.otp.trim())) {
-      setErrorMessage('OTP must be exactly 6 digits.');
+      setErrorMessage('Mã OTP phải gồm đúng 6 chữ số.');
       return;
     }
 
     if (formData.newPassword.length < 6) {
-      setErrorMessage('New password must be at least 6 characters.');
+      setErrorMessage('Mật khẩu mới phải có ít nhất 6 ký tự.');
       return;
     }
 
@@ -88,13 +88,11 @@ function ResetPasswordPage() {
       navigate('/login', {
         replace: true,
         state: {
-          message: response?.data?.message || 'Reset password successfully',
+          message: response?.data?.message || 'Đặt lại mật khẩu thành công',
         },
       });
     } catch (error) {
-      setErrorMessage(
-        error.response?.data?.message || 'Cannot reset password right now.'
-      );
+      setErrorMessage(error.response?.data?.message || 'Hiện không thể đặt lại mật khẩu.');
     } finally {
       setLoading(false);
     }
@@ -106,15 +104,12 @@ function ResetPasswordPage() {
         <div className="mx-auto grid max-w-6xl gap-8 overflow-hidden rounded-[36px] border border-white/70 bg-white shadow-2xl shadow-slate-900/10 lg:grid-cols-[1fr_440px]">
           <div className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(255,69,0,0.25),_transparent_24%),linear-gradient(135deg,_#020617_0%,_#111827_58%,_#1f2937_100%)] px-6 py-10 text-white sm:px-10 lg:px-12 lg:py-14">
             <div className="relative z-10 max-w-xl">
-              <p className="text-sm font-bold uppercase tracking-[0.34em] text-orange-300">
-                Secure Reset
-              </p>
+              <p className="text-sm font-bold uppercase tracking-[0.34em] text-orange-300">Đặt lại bảo mật</p>
               <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
-                Set a new password with the email OTP.
+                Tạo mật khẩu mới bằng OTP từ email.
               </h1>
               <p className="mt-5 text-base leading-8 text-slate-300">
-                This form matches the existing backend reset API and keeps the password
-                recovery flow within the current SneakerHub visual system.
+                Form này khớp với API reset password hiện có của backend và giữ nguyên phong cách giao diện SneakerHub.
               </p>
             </div>
           </div>
@@ -123,12 +118,9 @@ function ResetPasswordPage() {
             <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-2xl text-orange-600">
               <SafetyCertificateOutlined />
             </div>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
-              Reset password
-            </h2>
+            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">Đặt lại mật khẩu</h2>
             <p className="mt-3 text-sm leading-7 text-slate-500">
-              Enter your email, the 6-digit OTP, and a new password with at least 6
-              characters.
+              Nhập email, mã OTP 6 số và mật khẩu mới có ít nhất 6 ký tự.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
@@ -171,11 +163,8 @@ function ResetPasswordPage() {
               </div>
 
               <div>
-                <label
-                  htmlFor="newPassword"
-                  className="mb-2 block text-sm font-bold text-slate-900"
-                >
-                  New password
+                <label htmlFor="newPassword" className="mb-2 block text-sm font-bold text-slate-900">
+                  Mật khẩu mới
                 </label>
                 <div className="relative">
                   <LockOutlined className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -187,7 +176,7 @@ function ResetPasswordPage() {
                     minLength={6}
                     value={formData.newPassword}
                     onChange={handleChange}
-                    placeholder="At least 6 characters"
+                    placeholder="Ít nhất 6 ký tự"
                     className="field-input pl-11"
                   />
                 </div>
@@ -210,18 +199,15 @@ function ResetPasswordPage() {
                 disabled={loading}
                 className="btn-primary flex w-full justify-center rounded-2xl px-5 py-4 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {loading ? 'Resetting...' : 'Reset password'}
+                {loading ? 'Đang đặt lại...' : 'Đặt lại mật khẩu'}
                 {!loading && <RightOutlined />}
               </button>
             </form>
 
             <p className="mt-6 text-sm text-slate-500">
-              Back to{' '}
-              <Link
-                to="/login"
-                className="font-bold text-orange-600 transition hover:text-orange-700"
-              >
-                Login
+              Quay lại{' '}
+              <Link to="/login" className="font-bold text-orange-600 transition hover:text-orange-700">
+                Đăng nhập
               </Link>
             </p>
           </div>

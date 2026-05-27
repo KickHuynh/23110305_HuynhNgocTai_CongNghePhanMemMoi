@@ -24,18 +24,18 @@ const defaultFilters = {
 };
 
 const filterLabels = {
-  keyword: 'Keyword',
-  category: 'Category',
-  brand: 'Brand',
-  minPrice: 'Min',
-  maxPrice: 'Max',
-  size: 'Size',
-  color: 'Color',
-  sort: 'Sort',
-  inStock: 'Stock',
-  isPromotion: 'Promotion',
-  isNewProduct: 'New',
-  isBestSeller: 'Best Seller',
+  keyword: 'Từ khóa',
+  category: 'Danh mục',
+  brand: 'Thương hiệu',
+  minPrice: 'Từ giá',
+  maxPrice: 'Đến giá',
+  size: 'Kích cỡ',
+  color: 'Màu sắc',
+  sort: 'Sắp xếp',
+  inStock: 'Tồn kho',
+  isPromotion: 'Khuyến mãi',
+  isNewProduct: 'Mới',
+  isBestSeller: 'Bán chạy',
 };
 
 const parseFiltersFromSearchParams = (searchParams) => {
@@ -154,7 +154,7 @@ function ProductSearchPage() {
           hasPrevPage: Boolean(nextPagination.hasPrevPage),
         });
       } catch (apiError) {
-        setError(apiError.response?.data?.message || 'Unable to load sneakers for the selected filters.');
+        setError(apiError.response?.data?.message || 'Không thể tải sản phẩm theo bộ lọc đã chọn.');
         setProducts([]);
         setPagination({
           page: 1,
@@ -212,12 +212,12 @@ function ProductSearchPage() {
           <div className="max-w-3xl">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.32em] text-orange-300">
               <FilterOutlined />
-              Explore Sneakers
+              Khám phá sneaker
             </div>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Explore Sneakers</h1>
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Tìm kiếm sản phẩm</h1>
             <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
-              Find your perfect pair from our latest sneaker collection. Filter by style, brand, price range, size,
-              and color to narrow in on the best match.
+              Tìm đôi giày phù hợp từ bộ sưu tập mới nhất. Lọc theo phong cách, thương hiệu, mức giá,
+              kích cỡ và màu sắc để nhanh chóng chọn được sản phẩm phù hợp.
             </p>
           </div>
         </div>
@@ -226,12 +226,12 @@ function ProductSearchPage() {
       <div className="content-shell py-10">
         <div className="mb-6 flex items-center justify-between gap-4 lg:hidden">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-orange-600">Product Count</p>
-            <h2 className="text-2xl font-bold text-slate-950">{pagination.total} sneakers</h2>
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-orange-600">Số lượng sản phẩm</p>
+            <h2 className="text-2xl font-bold text-slate-950">{pagination.total} sneaker</h2>
           </div>
           <button type="button" onClick={() => setMobileFiltersOpen((current) => !current)} className="btn-secondary px-5 py-3">
             <FilterOutlined />
-            Filters
+            Bộ lọc
           </button>
         </div>
 
@@ -251,10 +251,10 @@ function ProductSearchPage() {
             <div className="glass-panel p-5 sm:p-6">
               <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-orange-600">Search Results</p>
-                  <h2 className="mt-1 text-2xl font-bold text-slate-950">{pagination.total} sneakers found</h2>
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-orange-600">Kết quả tìm kiếm</p>
+                  <h2 className="mt-1 text-2xl font-bold text-slate-950">{pagination.total} sản phẩm được tìm thấy</h2>
                   <p className="mt-2 text-sm text-slate-500">
-                    Browse premium sneaker picks tailored to your filters and backend product data. Page {pagination.page} of {pagination.totalPages}.
+                    Duyệt các mẫu sneaker cao cấp theo bộ lọc hiện tại. Trang {pagination.page} / {pagination.totalPages}.
                   </p>
                 </div>
 
@@ -268,7 +268,7 @@ function ProductSearchPage() {
                         className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-2 text-sm font-semibold text-orange-700 transition hover:bg-orange-100"
                       >
                         <span>
-                          {filterLabels[key] || key}: {value === 'true' ? 'Yes' : value}
+                          {filterLabels[key] || key}: {value === 'true' ? 'Có' : value}
                         </span>
                         <CloseOutlined className="text-xs" />
                       </button>
@@ -294,23 +294,23 @@ function ProductSearchPage() {
               </div>
             ) : error ? (
               <ErrorMessage
-                title="Unable to load sneakers"
+                title="Không thể tải sản phẩm"
                 message={error}
                 minHeight="min-h-72"
                 action={
                   <button type="button" onClick={applyFilters} className="btn-primary">
-                    Try again
+                    Thử lại
                   </button>
                 }
               />
             ) : products.length === 0 ? (
               <EmptyState
-                title="No products found"
-                description="Try adjusting your search keyword, price range, or product options to see more results."
+                title="Không tìm thấy sản phẩm"
+                description="Hãy thử thay đổi từ khóa, khoảng giá hoặc lựa chọn sản phẩm để xem thêm kết quả."
                 minHeight="min-h-72"
                 action={
                   <button type="button" onClick={resetFilters} className="btn-secondary">
-                    Reset filters
+                    Đặt lại bộ lọc
                   </button>
                 }
               />
@@ -324,9 +324,9 @@ function ProductSearchPage() {
 
                 <div className="glass-panel flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm font-bold uppercase tracking-[0.24em] text-orange-600">Pagination</p>
+                    <p className="text-sm font-bold uppercase tracking-[0.24em] text-orange-600">Phân trang</p>
                     <p className="mt-1 text-sm text-slate-500">
-                      Showing page {pagination.page} of {pagination.totalPages} with {pagination.limit} products per page.
+                      Đang xem trang {pagination.page} / {pagination.totalPages}, mỗi trang {pagination.limit} sản phẩm.
                     </p>
                   </div>
 
@@ -338,7 +338,7 @@ function ProductSearchPage() {
                       className={`btn-secondary px-5 py-3 ${!pagination.hasPrevPage ? 'cursor-not-allowed opacity-50 hover:translate-y-0 hover:border-slate-300 hover:text-slate-900' : ''}`}
                     >
                       <ArrowLeftOutlined />
-                      Previous
+                      Trước
                     </button>
                     <button
                       type="button"
@@ -346,7 +346,7 @@ function ProductSearchPage() {
                       disabled={!pagination.hasNextPage}
                       className={`btn-primary px-5 py-3 ${!pagination.hasNextPage ? 'cursor-not-allowed opacity-50 hover:translate-y-0 hover:bg-orange-600' : ''}`}
                     >
-                      Next
+                      Tiếp
                       <ArrowRightOutlined />
                     </button>
                   </div>

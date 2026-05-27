@@ -1,8 +1,8 @@
 import { LoadingOutlined } from '@ant-design/icons';
 
 function Loading({
-  title = 'Loading content',
-  description = 'Please wait while SneakerHub loads the latest data.',
+  title = 'Đang tải nội dung',
+  description = 'Vui lòng chờ trong khi SneakerHub tải dữ liệu mới nhất.',
   minHeight = 'min-h-56',
   className = '',
 }) {

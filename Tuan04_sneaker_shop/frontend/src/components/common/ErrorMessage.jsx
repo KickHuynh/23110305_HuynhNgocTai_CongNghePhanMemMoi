@@ -1,8 +1,8 @@
 import { WarningOutlined } from '@ant-design/icons';
 
 function ErrorMessage({
-  title = 'Something went wrong',
-  message = 'Please try again in a moment.',
+  title = 'Đã xảy ra lỗi',
+  message = 'Vui lòng thử lại sau ít phút.',
   action = null,
   minHeight = 'min-h-56',
   className = '',

@@ -1,8 +1,8 @@
 import { InboxOutlined } from '@ant-design/icons';
 
 function EmptyState({
-  title = 'Nothing to show yet',
-  description = 'This section is waiting for more data from the backend.',
+  title = 'Chưa có dữ liệu hiển thị',
+  description = 'Khu vực này đang chờ thêm dữ liệu từ backend.',
   icon,
   action = null,
   minHeight = 'min-h-56',

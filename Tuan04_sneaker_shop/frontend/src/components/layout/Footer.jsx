@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 
 const footerLinks = [
-  { label: 'Home', to: '/' },
-  { label: 'Products', to: '/products' },
-  { label: 'Categories', to: '/categories' },
+  { label: 'Trang chủ', to: '/' },
+  { label: 'Sản phẩm', to: '/products' },
+  { label: 'Danh mục', to: '/categories' },
 ];
 
 function Footer() {
@@ -13,7 +13,7 @@ function Footer() {
         <div>
           <p className="text-sm font-bold uppercase tracking-[0.3em] text-orange-600">SneakerHub</p>
           <p className="mt-1 text-sm text-slate-500">
-            Fullstack sneaker storefront portfolio built with React, Express, and MongoDB.
+            Website portfolio sneaker fullstack được xây dựng bằng React, Express và MongoDB.
           </p>
         </div>
 

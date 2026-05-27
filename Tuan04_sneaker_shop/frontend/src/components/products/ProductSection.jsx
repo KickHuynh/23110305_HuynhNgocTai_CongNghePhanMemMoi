@@ -11,7 +11,7 @@ function ProductSection({ title, subtitle, products = [], loading = false, error
         <div className="max-w-2xl">
           <div className="mb-3 flex items-center gap-3">
             <span className="accent-dot" />
-            <p className="text-xs font-extrabold uppercase tracking-[0.32em] text-orange-600">SneakerHub Edit</p>
+            <p className="text-xs font-extrabold uppercase tracking-[0.32em] text-orange-600">Tuyển chọn SneakerHub</p>
           </div>
           <h2 className="section-heading">{title}</h2>
           {subtitle && <p className="section-copy mt-3">{subtitle}</p>}
@@ -19,7 +19,7 @@ function ProductSection({ title, subtitle, products = [], loading = false, error
 
         {viewAllLink && (
           <Link to={viewAllLink} className="btn-secondary self-start px-5 py-3 sm:self-auto">
-            View all
+            Xem tất cả
             <ArrowRightOutlined />
           </Link>
         )}
@@ -40,7 +40,7 @@ function ProductSection({ title, subtitle, products = [], loading = false, error
           ))}
         </div>
       ) : error ? (
-        <ErrorMessage title="Unable to load this section" message={error} />
+        <ErrorMessage title="Không thể tải mục này" message={error} />
       ) : products.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {products.map((product) => (
@@ -49,8 +49,8 @@ function ProductSection({ title, subtitle, products = [], loading = false, error
         </div>
       ) : (
         <EmptyState
-          title="No products available"
-          description="This collection is still being prepared. Please check again in a moment."
+          title="Chưa có sản phẩm"
+          description="Bộ sưu tập này đang được cập nhật. Vui lòng quay lại sau."
         />
       )}
     </section>

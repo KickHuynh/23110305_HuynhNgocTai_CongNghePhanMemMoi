@@ -9,19 +9,31 @@ This project demonstrates a simple sneaker storefront with:
 - JWT-based user authentication
 - Product listing with filtering, sorting, and pagination
 - Product detail pages with image gallery and related products
+- MongoDB-backed cart persistence per user
+- COD checkout flow with shipping address capture
+- User order history and order tracking timeline
+- 30-minute cancellation logic with cancellation-request flow for preparing orders
 - Category-based product browsing
 - Responsive modern UI built for portfolio presentation
 
-The current scope focuses on a clean product-browsing experience without introducing checkout or admin complexity yet.
+The current scope now covers the core student e-commerce journey from product browsing to cart, COD checkout, and order tracking without adding a real online payment gateway yet.
 
 ## Features
 
 - Register, login, and profile pages connected to the existing Express auth API
 - Homepage sections for promotions, new arrivals, best sellers, and rankings
 - Product search page with keyword, category, brand, price, size, color, stock, and promotion filters
-- Product detail page with image swiper, stock state, size/color selection, and related products
+- Product detail page with image swiper, stock state, size/color selection, and real Add to Cart flow
+- Protected cart page with quantity updates, item removal, and clear-cart support
+- COD checkout page with shipping address form and pricing summary
+- Order history page for logged-in users
+- Order detail page with Vietnamese status labels and status history timeline
+- Automatic order confirmation after 30 minutes if the order remains new
+- Cancellation rules:
+  - New/confirmed orders can be cancelled within 30 minutes
+  - Preparing orders become `cancel_requested` instead of direct cancellation
 - Category page with grouped product sections and infinite scroll
-- Shared API layer with `axiosClient`, `productApi`, and `authApi`
+- Shared API layer with `axiosClient`, `productApi`, `authApi`, `cartApi`, and `orderApi`
 - Environment-based frontend API configuration via `VITE_API_URL`
 
 ## Tech Stack
@@ -172,20 +184,29 @@ sneaker_shop
 - `GET /api/products/top/most-viewed`
 - `GET /api/products/:identifier`
 - `GET /api/products/:identifier/related`
+- `GET /api/cart`
+- `POST /api/cart/items`
+- `PUT /api/cart/items/:itemId`
+- `DELETE /api/cart/items/:itemId`
+- `DELETE /api/cart`
+- `POST /api/orders/checkout`
+- `GET /api/orders/my-orders`
+- `GET /api/orders/:orderId`
+- `PUT /api/orders/:orderId/cancel`
 
-More detailed endpoint documentation is available in [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md).
+More detailed endpoint documentation is available in [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md) and [docs/CART_ORDER_API_GUIDE.md](docs/CART_ORDER_API_GUIDE.md).
 
 ## Current Limitations
 
-- Cart, order, payment, wishlist, and admin dashboard features are not implemented yet
-- The current add-to-cart button on the product detail page is UI-only
+- Only COD payment is implemented; there is no real online payment gateway yet
+- Admin order-management UI is not implemented yet, even though an admin status-update API is available
 - There is no automated test suite yet
 - The project is currently configured for local MongoDB development
 
 ## Future Improvements
 
-- Add cart and checkout flow
-- Add order history and payment integration
+- Add MoMo/ZaloPay or other e-wallet integration
+- Add admin order management screens
 - Add admin product management
 - Add automated tests and deployment guides
 - Add richer validation, logging, and production configuration

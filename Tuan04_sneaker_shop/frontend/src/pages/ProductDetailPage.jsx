@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { ArrowLeftOutlined, CheckCircleFilled, ShoppingCartOutlined, StarFilled } from '@ant-design/icons';
 import { message } from 'antd';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { getStoredToken } from '../api/authApi';
+import cartApi from '../api/cartApi';
 import ErrorMessage from '../components/common/ErrorMessage';
 import QuantitySelector from '../components/common/QuantitySelector';
 import ProductImageSwiper from '../components/products/ProductImageSwiper';
@@ -24,6 +26,7 @@ function ProductDetailPage() {
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
 
   useEffect(() => {
     const fetchProductDetails = async () => {
@@ -40,11 +43,11 @@ function ProductDetailPage() {
         const fetchedProduct = extractApiData(productResponse, null);
         setProduct(fetchedProduct);
         setRelatedProducts(extractApiData(relatedResponse, []));
-        setSelectedSize(fetchedProduct?.sizes?.[0] || '');
-        setSelectedColor(fetchedProduct?.colors?.[0] || '');
+        setSelectedSize('');
+        setSelectedColor('');
         setQuantity(1);
       } catch (apiError) {
-        setError(apiError.response?.data?.message || 'Unable to load this sneaker right now.');
+        setError(apiError.response?.data?.message || 'Không thể tải sản phẩm này lúc này.');
         setProduct(null);
         setRelatedProducts([]);
       } finally {
@@ -86,13 +89,13 @@ function ProductDetailPage() {
       <div className="page-shell">
         <div className="content-shell py-16">
           <ErrorMessage
-            title={error || 'Product not found'}
-            message="The sneaker you are trying to view is unavailable or may have been removed from the catalog."
+            title={error || 'Không tìm thấy sản phẩm'}
+            message="Sản phẩm bạn đang xem hiện không khả dụng hoặc đã bị gỡ khỏi danh mục."
             minHeight="min-h-[420px]"
             action={
               <button type="button" onClick={() => navigate('/products')} className="btn-primary">
                 <ArrowLeftOutlined />
-                Back to Products
+                Quay lại sản phẩm
               </button>
             }
           />
@@ -106,18 +109,44 @@ function ProductDetailPage() {
   const saleAmount = hasSalePrice(product) ? Number(product.price) - Number(product.salePrice) : 0;
   const formattedViews = Number(product.views || 0).toLocaleString('vi-VN');
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
+    if (!getStoredToken()) {
+      navigate('/login', {
+        state: {
+          from: `/products/${productId}`,
+          message: 'Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.',
+        },
+      });
+      return;
+    }
+
     if (product.sizes?.length && !selectedSize) {
-      message.warning('Please select a size first.');
+      message.warning('Vui lòng chọn kích cỡ trước.');
       return;
     }
 
     if (product.colors?.length && !selectedColor) {
-      message.warning('Please select a color first.');
+      message.warning('Vui lòng chọn màu sắc trước.');
       return;
     }
 
-    message.success('Added to cart successfully!');
+    try {
+      setAddingToCart(true);
+
+      await cartApi.addToCart({
+        productId: product._id,
+        size: product.sizes?.length ? selectedSize : 'Standard',
+        color: product.colors?.length ? selectedColor : 'Default',
+        quantity,
+      });
+
+      message.success('Thêm vào giỏ hàng thành công.');
+      navigate('/cart');
+    } catch (apiError) {
+      message.error(apiError.response?.data?.message || 'Không thể thêm sản phẩm vào giỏ hàng lúc này.');
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   return (
@@ -125,11 +154,11 @@ function ProductDetailPage() {
       <div className="content-shell py-8">
         <div className="mb-6 flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-500">
           <Link to="/" className="transition hover:text-orange-600">
-            Home
+            Trang chủ
           </Link>
           <span>/</span>
           <Link to="/products" className="transition hover:text-orange-600">
-            Products
+            Sản phẩm
           </Link>
           <span>/</span>
           <span className="truncate text-slate-900">{sanitizeText(product.name)}</span>
@@ -147,17 +176,17 @@ function ProductDetailPage() {
               </span>
               {hasSalePrice(product) && (
                 <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.22em] text-orange-600">
-                  Sale
+                  Khuyến mãi
                 </span>
               )}
               {(product.isNew || product.isNewProduct) && (
                 <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.22em] text-sky-600">
-                  New
+                  Mới
                 </span>
               )}
               {product.isBestSeller && (
                 <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.22em] text-amber-800">
-                  Best Seller
+                  Bán chạy
                 </span>
               )}
             </div>
@@ -168,9 +197,9 @@ function ProductDetailPage() {
             <div className="mt-5 flex flex-wrap items-center gap-4 text-sm">
               <div className="flex items-center gap-1">{renderStars(product.rating)}</div>
               <span className="font-semibold text-slate-700">{product.rating || 5}/5</span>
-              <span className="text-slate-400">{product.numReviews || 0} reviews</span>
-              <span className="text-slate-400">{product.sold || 0} sold</span>
-              <span className="text-slate-400">Views: {formattedViews}</span>
+              <span className="text-slate-400">{product.numReviews || 0} đánh giá</span>
+              <span className="text-slate-400">{product.sold || 0} đã bán</span>
+              <span className="text-slate-400">Lượt xem: {formattedViews}</span>
             </div>
 
             <div className="mt-6 rounded-[28px] border border-orange-100 bg-orange-50/60 p-5">
@@ -181,26 +210,26 @@ function ProductDetailPage() {
                 )}
               </div>
               {hasSalePrice(product) && (
-                <p className="mt-2 text-sm font-semibold text-orange-700">You save {formatCurrency(saleAmount)}</p>
+                <p className="mt-2 text-sm font-semibold text-orange-700">Bạn tiết kiệm {formatCurrency(saleAmount)}</p>
               )}
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <div className={`rounded-2xl border px-4 py-3 ${outOfStock ? 'border-red-100 bg-red-50 text-red-600' : 'border-emerald-100 bg-emerald-50 text-emerald-700'}`}>
-                <p className="text-xs font-bold uppercase tracking-[0.24em]">Stock</p>
-                <p className="mt-1 text-lg font-bold">{outOfStock ? 'Out of stock' : 'In stock'}</p>
+                <p className="text-xs font-bold uppercase tracking-[0.24em]">Tồn kho</p>
+                <p className="mt-1 text-lg font-bold">{outOfStock ? 'Hết hàng' : 'Còn hàng'}</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700">
-                <p className="text-xs font-bold uppercase tracking-[0.24em]">Inventory</p>
-                <p className="mt-1 text-lg font-bold">{product.stock || 0} pairs available</p>
+                <p className="text-xs font-bold uppercase tracking-[0.24em]">Số lượng hiện có</p>
+                <p className="mt-1 text-lg font-bold">{product.stock || 0} đôi</p>
               </div>
             </div>
 
             {product.sizes?.length > 0 && (
               <div className="mt-8">
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="text-sm font-bold uppercase tracking-[0.24em] text-slate-900">Select size</p>
-                  <p className="text-sm font-semibold text-slate-500">{selectedSize ? `Selected: ${selectedSize}` : 'Choose a size'}</p>
+                  <p className="text-sm font-bold uppercase tracking-[0.24em] text-slate-900">Chọn kích cỡ</p>
+                  <p className="text-sm font-semibold text-slate-500">{selectedSize ? `Đã chọn: ${selectedSize}` : 'Vui lòng chọn kích cỡ'}</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {product.sizes.map((size) => (
@@ -224,8 +253,8 @@ function ProductDetailPage() {
             {product.colors?.length > 0 && (
               <div className="mt-8">
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="text-sm font-bold uppercase tracking-[0.24em] text-slate-900">Select color</p>
-                  <p className="text-sm font-semibold text-slate-500">{selectedColor || 'Choose a color'}</p>
+                  <p className="text-sm font-bold uppercase tracking-[0.24em] text-slate-900">Chọn màu sắc</p>
+                  <p className="text-sm font-semibold text-slate-500">{selectedColor || 'Vui lòng chọn màu sắc'}</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {product.colors.map((color) => (
@@ -252,7 +281,7 @@ function ProductDetailPage() {
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="mb-2 text-sm font-bold uppercase tracking-[0.24em] text-slate-900">Quantity</p>
+                <p className="mb-2 text-sm font-bold uppercase tracking-[0.24em] text-slate-900">Số lượng</p>
                 <QuantitySelector value={quantity} onChange={setQuantity} min={1} max={Math.max(product.stock || 1, 1)} disabled={outOfStock} />
               </div>
             </div>
@@ -261,19 +290,19 @@ function ProductDetailPage() {
               <button
                 type="button"
                 onClick={handleAddToCart}
-                disabled={outOfStock}
+                disabled={outOfStock || addingToCart}
                 className={`flex items-center justify-center gap-2 rounded-2xl px-5 py-4 text-sm font-bold transition ${
-                  outOfStock
+                  outOfStock || addingToCart
                     ? 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
                     : 'bg-orange-600 text-white shadow-lg shadow-orange-600/25 hover:-translate-y-0.5 hover:bg-orange-700'
                 }`}
               >
                 <ShoppingCartOutlined />
-                {outOfStock ? 'Out of stock' : 'Add to Cart'}
+                {outOfStock ? 'Hết hàng' : addingToCart ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}
               </button>
               <Link to="/products" className="btn-secondary justify-center rounded-2xl px-5 py-4">
                 <ArrowLeftOutlined />
-                Back to Products
+                Quay lại sản phẩm
               </Link>
             </div>
 
@@ -281,16 +310,16 @@ function ProductDetailPage() {
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="mb-2 flex items-center gap-2 text-slate-900">
                   <CheckCircleFilled className="text-orange-600" />
-                  <p className="font-bold">Authenticity guaranteed</p>
+                  <p className="font-bold">Cam kết chính hãng</p>
                 </div>
-                <p className="text-sm text-slate-500">Every pair is sourced from trusted inventory with quality checks before shipping.</p>
+                <p className="text-sm text-slate-500">Mỗi đôi giày đều được lấy từ nguồn uy tín và kiểm tra chất lượng trước khi giao.</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="mb-2 flex items-center gap-2 text-slate-900">
                   <CheckCircleFilled className="text-orange-600" />
-                  <p className="font-bold">Fast delivery support</p>
+                  <p className="font-bold">Hỗ trợ giao hàng nhanh</p>
                 </div>
-                <p className="text-sm text-slate-500">Quick nationwide dispatch with live support for size and product questions.</p>
+                <p className="text-sm text-slate-500">Giao hàng toàn quốc nhanh chóng cùng hỗ trợ tư vấn size và sản phẩm.</p>
               </div>
             </div>
           </div>
@@ -298,33 +327,33 @@ function ProductDetailPage() {
 
         <div className="mt-10 grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="glass-panel p-6 sm:p-8">
-            <h2 className="text-2xl font-bold text-slate-950">Product Description</h2>
+            <h2 className="text-2xl font-bold text-slate-950">Mô tả sản phẩm</h2>
             <p className="mt-4 text-base leading-8 text-slate-600">
-              {sanitizeText(product.description || 'No product description has been provided for this sneaker yet.')}
+              {sanitizeText(product.description || 'Hiện chưa có mô tả chi tiết cho sản phẩm này.')}
             </p>
           </div>
 
           <div className="glass-panel p-6 sm:p-8">
-            <h2 className="text-2xl font-bold text-slate-950">Product Snapshot</h2>
+            <h2 className="text-2xl font-bold text-slate-950">Thông tin nhanh</h2>
             <div className="mt-5 space-y-4 text-sm">
               <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3">
-                <span className="font-semibold text-slate-500">Brand</span>
+                <span className="font-semibold text-slate-500">Thương hiệu</span>
                 <span className="font-bold text-slate-950">{product.brand}</span>
               </div>
               <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3">
-                <span className="font-semibold text-slate-500">Category</span>
+                <span className="font-semibold text-slate-500">Danh mục</span>
                 <span className="font-bold text-slate-950">{product.category}</span>
               </div>
               <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3">
-                <span className="font-semibold text-slate-500">Sold</span>
+                <span className="font-semibold text-slate-500">Đã bán</span>
                 <span className="font-bold text-slate-950">{product.sold || 0}</span>
               </div>
               <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3">
-                <span className="font-semibold text-slate-500">Views</span>
+                <span className="font-semibold text-slate-500">Lượt xem</span>
                 <span className="font-bold text-slate-950">{formattedViews}</span>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className="font-semibold text-slate-500">Product ID</span>
+                <span className="font-semibold text-slate-500">Mã sản phẩm</span>
                 <span className="font-mono text-xs font-bold text-slate-950">{product._id}</span>
               </div>
             </div>
@@ -332,8 +361,8 @@ function ProductDetailPage() {
         </div>
 
         <ProductSection
-          title="You may also like"
-          subtitle="Related sneakers from the same category and vibe."
+          title="Sản phẩm liên quan"
+          subtitle="Những mẫu sneaker cùng danh mục và cùng phong cách dành cho bạn."
           products={relatedProducts}
           loading={false}
           error=""

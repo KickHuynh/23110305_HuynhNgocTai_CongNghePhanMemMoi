@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { CloseOutlined, LogoutOutlined, MenuOutlined, ShopOutlined, UserOutlined } from '@ant-design/icons';
+import {
+  CloseOutlined,
+  LogoutOutlined,
+  MenuOutlined,
+  ShoppingCartOutlined,
+  ShopOutlined,
+  SolutionOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   clearAuthSession,
@@ -16,12 +24,23 @@ function Navbar() {
   const user = getStoredUser();
   const isAuthenticated = Boolean(getStoredToken());
   const profilePath = getProfileRouteByRole(user?.role);
-  const navLinks = [
-    { label: 'Home', to: '/', end: true },
-    { label: 'Products', to: '/products' },
-    { label: 'Categories', to: '/categories' },
-    { label: 'Profile', to: profilePath },
+  const isAdmin = user?.role === 'admin';
+  const baseNavLinks = [
+    { label: 'Trang chủ', to: '/', end: true },
+    { label: 'Sản phẩm', to: '/products' },
+    { label: 'Danh mục', to: '/categories' },
   ];
+  const memberNavLinks =
+    isAuthenticated && !isAdmin
+      ? [
+          { label: 'Giỏ hàng', to: '/cart', icon: <ShoppingCartOutlined /> },
+          { label: 'Đơn hàng của tôi', to: '/orders', icon: <SolutionOutlined /> },
+        ]
+      : [];
+  const profileNavLinks = isAuthenticated
+    ? [{ label: isAdmin ? 'Hồ sơ quản trị' : 'Hồ sơ cá nhân', to: profilePath }]
+    : [];
+  const navLinks = [...baseNavLinks, ...memberNavLinks, ...profileNavLinks];
   const authRoute =
     location.pathname === '/login' ||
     location.pathname === '/register' ||
@@ -50,7 +69,7 @@ function Navbar() {
             <div className="min-w-0">
               <p className="truncate text-xl font-bold tracking-tight text-slate-950">SneakerHub</p>
               <p className="truncate text-xs font-semibold uppercase tracking-[0.28em] text-orange-600">
-                Premium Sneaker Shop
+                Cửa hàng sneaker cao cấp
               </p>
             </div>
           </NavLink>
@@ -62,13 +81,14 @@ function Navbar() {
                 to={link.to}
                 end={link.end}
                 className={({ isActive }) =>
-                  `rounded-full px-4 py-2 text-sm font-bold transition ${
+                  `inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${
                     isActive
                       ? 'bg-orange-50 text-orange-600'
                       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950'
                   }`
                 }
               >
+                {link.icon && <span className="text-base">{link.icon}</span>}
                 {link.label}
               </NavLink>
             ))}
@@ -93,18 +113,18 @@ function Navbar() {
                 </NavLink>
                 <button type="button" onClick={handleLogout} className="btn-secondary px-4 py-2.5">
                   <LogoutOutlined />
-                  Logout
+                  Đăng xuất
                 </button>
               </>
             ) : (
               <div className="flex items-center gap-3">
                 {!authRoute && (
                   <NavLink to="/register" className="btn-secondary px-5 py-2.5">
-                    Register
+                    Đăng ký
                   </NavLink>
                 )}
                 <NavLink to="/login" className="btn-primary px-5 py-2.5">
-                  Login
+                  Đăng nhập
                 </NavLink>
               </div>
             )}
@@ -133,13 +153,14 @@ function Navbar() {
                   end={link.end}
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `rounded-2xl px-4 py-3 text-sm font-bold transition ${
+                    `inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition ${
                       isActive
                         ? 'bg-slate-950 text-white'
                         : 'bg-slate-50 text-slate-700 hover:bg-orange-50 hover:text-orange-600'
                     }`
                   }
                 >
+                  {link.icon && <span className="text-base">{link.icon}</span>}
                   {link.label}
                 </NavLink>
               ))}
@@ -160,18 +181,18 @@ function Navbar() {
                 </div>
                 <button type="button" onClick={handleLogout} className="btn-secondary mt-4 w-full justify-center">
                   <LogoutOutlined />
-                  Logout
+                  Đăng xuất
                 </button>
               </div>
             ) : (
               <div className="grid gap-3">
                 {!authRoute && (
                   <NavLink to="/register" onClick={() => setMobileMenuOpen(false)} className="btn-secondary justify-center">
-                    Register
+                    Đăng ký
                   </NavLink>
                 )}
                 <NavLink to="/login" onClick={() => setMobileMenuOpen(false)} className="btn-primary justify-center">
-                  Login
+                  Đăng nhập
                 </NavLink>
               </div>
             )}

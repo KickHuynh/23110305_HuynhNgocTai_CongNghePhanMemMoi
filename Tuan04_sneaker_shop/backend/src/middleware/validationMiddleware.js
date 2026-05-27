@@ -1,5 +1,16 @@
+const mongoose = require('mongoose');
+
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const otpRegex = /^\d{6}$/;
+const orderStatusValues = [
+  'new',
+  'confirmed',
+  'preparing',
+  'shipping',
+  'delivered',
+  'cancelled',
+  'cancel_requested',
+];
 
 const sendValidationErrors = (res, errors) => {
   return res.status(400).json({
@@ -15,6 +26,16 @@ const isNonEmptyString = (value) => {
 
 const normalizeEmail = (email) => {
   return email.trim().toLowerCase();
+};
+
+const normalizeTrimmedText = (value) => {
+  return String(value || '').trim();
+};
+
+const isPositiveInteger = (value) => {
+  const parsedValue = Number(value);
+
+  return Number.isInteger(parsedValue) && parsedValue >= 1;
 };
 
 const validateRegister = (req, res, next) => {
@@ -203,6 +224,149 @@ const validateUpdateProfile = (req, res, next) => {
   return next();
 };
 
+const validateAddToCart = (req, res, next) => {
+  const { productId, size, color, quantity } = req.body;
+  const errors = [];
+
+  if (!mongoose.Types.ObjectId.isValid(productId || '')) {
+    errors.push('A valid productId is required');
+  }
+
+  if (!isNonEmptyString(size)) {
+    errors.push('Size is required');
+  }
+
+  if (!isNonEmptyString(color)) {
+    errors.push('Color is required');
+  }
+
+  if (!isPositiveInteger(quantity)) {
+    errors.push('Quantity is required and must be at least 1');
+  }
+
+  if (errors.length > 0) {
+    return sendValidationErrors(res, errors);
+  }
+
+  req.body.productId = String(productId).trim();
+  req.body.size = normalizeTrimmedText(size);
+  req.body.color = normalizeTrimmedText(color);
+  req.body.quantity = Number(quantity);
+
+  return next();
+};
+
+const validateUpdateCartItem = (req, res, next) => {
+  const { quantity } = req.body;
+  const errors = [];
+
+  if (!isPositiveInteger(quantity)) {
+    errors.push('Quantity is required and must be at least 1');
+  }
+
+  if (errors.length > 0) {
+    return sendValidationErrors(res, errors);
+  }
+
+  req.body.quantity = Number(quantity);
+
+  return next();
+};
+
+const validateCheckout = (req, res, next) => {
+  const { shippingAddress, paymentMethod } = req.body;
+  const errors = [];
+
+  if (!shippingAddress || typeof shippingAddress !== 'object') {
+    errors.push('shippingAddress is required');
+  } else {
+    if (!isNonEmptyString(shippingAddress.fullName)) {
+      errors.push('shippingAddress.fullName is required');
+    }
+
+    if (!isNonEmptyString(shippingAddress.phone)) {
+      errors.push('shippingAddress.phone is required');
+    }
+
+    if (!isNonEmptyString(shippingAddress.addressLine)) {
+      errors.push('shippingAddress.addressLine is required');
+    }
+
+    if (!isNonEmptyString(shippingAddress.city)) {
+      errors.push('shippingAddress.city is required');
+    }
+  }
+
+  if (normalizeTrimmedText(paymentMethod).toUpperCase() !== 'COD') {
+    errors.push('paymentMethod must be COD');
+  }
+
+  if (errors.length > 0) {
+    return sendValidationErrors(res, errors);
+  }
+
+  req.body.paymentMethod = 'COD';
+  req.body.shippingAddress = {
+    fullName: normalizeTrimmedText(shippingAddress.fullName),
+    phone: normalizeTrimmedText(shippingAddress.phone),
+    addressLine: normalizeTrimmedText(shippingAddress.addressLine),
+    ward: normalizeTrimmedText(shippingAddress.ward),
+    district: normalizeTrimmedText(shippingAddress.district),
+    city: normalizeTrimmedText(shippingAddress.city),
+    note: normalizeTrimmedText(shippingAddress.note),
+  };
+
+  return next();
+};
+
+const validateCancelOrder = (req, res, next) => {
+  const { reason } = req.body || {};
+  const errors = [];
+
+  if (
+    Object.prototype.hasOwnProperty.call(req.body || {}, 'reason') &&
+    typeof reason !== 'string'
+  ) {
+    errors.push('reason must be a string if provided');
+  }
+
+  if (errors.length > 0) {
+    return sendValidationErrors(res, errors);
+  }
+
+  req.body = {
+    ...req.body,
+    reason: normalizeTrimmedText(reason),
+  };
+
+  return next();
+};
+
+const validateUpdateOrderStatus = (req, res, next) => {
+  const { status, note } = req.body;
+  const errors = [];
+
+  if (!isNonEmptyString(status) || !orderStatusValues.includes(status.trim())) {
+    errors.push(`status must be one of: ${orderStatusValues.join(', ')}`);
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(req.body, 'note') &&
+    typeof note !== 'string'
+  ) {
+    errors.push('note must be a string if provided');
+  }
+
+  if (errors.length > 0) {
+    return sendValidationErrors(res, errors);
+  }
+
+  req.body.status = status.trim();
+  req.body.note = normalizeTrimmedText(note);
+
+  return next();
+};
+
 module.exports = {
   validateRegister,
   validateLogin,
@@ -211,4 +375,9 @@ module.exports = {
   validateResendOtp,
   validateResetPassword,
   validateUpdateProfile,
+  validateAddToCart,
+  validateUpdateCartItem,
+  validateCheckout,
+  validateCancelOrder,
+  validateUpdateOrderStatus,
 };

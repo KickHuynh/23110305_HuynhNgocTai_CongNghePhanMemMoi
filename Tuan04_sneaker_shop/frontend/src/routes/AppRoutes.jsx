@@ -2,10 +2,14 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { getProfileRouteByRole, getStoredToken, getStoredUser } from '../api/authApi';
 import AdminProfilePage from '../pages/AdminProfilePage';
+import CartPage from '../pages/CartPage';
 import CategoryProductsPage from '../pages/CategoryProductsPage';
+import CheckoutPage from '../pages/CheckoutPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import HomePage from '../pages/HomePage';
 import LoginPage from '../pages/LoginPage';
+import OrderDetailPage from '../pages/OrderDetailPage';
+import OrderHistoryPage from '../pages/OrderHistoryPage';
 import ProductDetailPage from '../pages/ProductDetailPage';
 import ProductSearchPage from '../pages/ProductSearchPage';
 import ProfilePage from '../pages/ProfilePage';
@@ -42,6 +46,10 @@ function AppRoutes() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/profile" element={<ProfileRouteRedirect />} />
         <Route element={<ProtectedRoute allowedRoles={['student', 'user']} />}>
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/orders" element={<OrderHistoryPage />} />
+          <Route path="/orders/:orderId" element={<OrderDetailPage />} />
           <Route path="/user/profile" element={<ProfilePage />} />
         </Route>
         <Route element={<ProtectedRoute allowedRoles={['admin']} />}>

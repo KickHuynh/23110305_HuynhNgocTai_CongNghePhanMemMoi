@@ -2,6 +2,8 @@
 
 This document describes the currently implemented Sneaker Shop backend APIs only.
 
+For detailed cart and order examples, see [docs/CART_ORDER_API_GUIDE.md](./CART_ORDER_API_GUIDE.md).
+
 Base URL:
 
 ```txt
@@ -204,3 +206,28 @@ Common error structure:
   "error": "Detailed internal message"
 }
 ```
+
+## Cart and Orders
+
+The backend now also includes cart, checkout, and order tracking APIs.
+
+Available endpoints:
+
+- `GET /cart`
+- `POST /cart/items`
+- `PUT /cart/items/:itemId`
+- `DELETE /cart/items/:itemId`
+- `DELETE /cart`
+- `POST /orders/checkout`
+- `GET /orders/my-orders`
+- `GET /orders/:orderId`
+- `PUT /orders/:orderId/cancel`
+- `PUT /orders/:orderId/status` (admin only)
+
+Key rules:
+
+- Cart and order endpoints are protected by JWT authentication.
+- COD is the only supported payment method for now.
+- New orders can be auto-confirmed after 30 minutes.
+- Users can cancel `new` and `confirmed` orders only within 30 minutes.
+- `preparing` orders switch to `cancel_requested` instead of immediate cancellation.

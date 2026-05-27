@@ -20,7 +20,7 @@ function CategoryProductsPage() {
         const response = await productApi.getCategories();
         setCategories(extractApiData(response, []));
       } catch (apiError) {
-        setError(apiError.response?.data?.message || 'Unable to load categories right now.');
+        setError(apiError.response?.data?.message || 'Không thể tải danh mục lúc này.');
         setCategories([]);
       } finally {
         setLoading(false);
@@ -37,11 +37,11 @@ function CategoryProductsPage() {
           <div className="max-w-3xl">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.32em] text-orange-300">
               <AppstoreOutlined />
-              Shop by Category
+              Mua sắm theo danh mục
             </div>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Shop by Category</h1>
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Danh mục sản phẩm</h1>
             <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
-              Explore sneakers by your favorite style and keep scrolling to reveal more products in each category.
+              Khám phá sneaker theo phong cách bạn yêu thích và tiếp tục cuộn để xem thêm sản phẩm trong từng danh mục.
             </p>
           </div>
         </div>
@@ -72,11 +72,11 @@ function CategoryProductsPage() {
             </div>
           ))
         ) : error ? (
-          <ErrorMessage title="Unable to load categories" message={error} minHeight="min-h-72" />
+          <ErrorMessage title="Không thể tải danh mục" message={error} minHeight="min-h-72" />
         ) : categories.length === 0 ? (
           <EmptyState
-            title="No categories found"
-            description="There are no active product categories available from the backend API yet."
+            title="Chưa có danh mục"
+            description="Hiện chưa có danh mục sản phẩm nào đang hoạt động từ backend."
             minHeight="min-h-72"
           />
         ) : (

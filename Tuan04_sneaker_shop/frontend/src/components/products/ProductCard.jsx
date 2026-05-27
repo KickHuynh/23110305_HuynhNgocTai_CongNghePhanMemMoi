@@ -13,20 +13,20 @@ const getBadges = (product) => {
   const badges = [];
 
   if (product?.stock <= 0) {
-    badges.push({ label: 'OUT OF STOCK', className: 'bg-slate-950 text-white' });
+    badges.push({ label: 'HẾT HÀNG', className: 'bg-slate-950 text-white' });
     return badges;
   }
 
   if (hasSalePrice(product)) {
-    badges.push({ label: 'SALE', className: 'bg-orange-600 text-white' });
+    badges.push({ label: 'KHUYẾN MÃI', className: 'bg-orange-600 text-white' });
   }
 
   if (product?.isNew || product?.isNewProduct) {
-    badges.push({ label: 'NEW', className: 'bg-sky-500 text-white' });
+    badges.push({ label: 'MỚI', className: 'bg-sky-500 text-white' });
   }
 
   if (product?.isBestSeller) {
-    badges.push({ label: 'BEST SELLER', className: 'bg-amber-300 text-slate-950' });
+    badges.push({ label: 'BÁN CHẠY', className: 'bg-amber-300 text-slate-950' });
   }
 
   return badges.slice(0, 3);
@@ -108,21 +108,21 @@ function ProductCard({ product }) {
             <span>{sanitizeText(product?.category || 'Lifestyle')}</span>
             <span className="inline-flex items-center gap-1.5">
               <FireFilled className="text-orange-500" />
-              {product?.sold || 0} sold
+              Đã bán {product?.sold || 0}
             </span>
           </div>
           <div className="flex items-center justify-between gap-3 text-sm">
             <span className={`font-semibold ${outOfStock ? 'text-red-500' : 'text-emerald-600'}`}>
-              {outOfStock ? 'Out of stock' : `In stock: ${product?.stock || 0}`}
+              {outOfStock ? 'Hết hàng' : `Còn hàng: ${product?.stock || 0}`}
             </span>
             <span className="inline-flex items-center gap-1.5 text-slate-500">
               {product?.views !== undefined && product?.views !== null ? (
                 <>
                   <EyeOutlined />
-                  {formattedViews} views
+                  {formattedViews} lượt xem
                 </>
               ) : (
-                `Sizes: ${product?.sizes?.length || 0}`
+                `Kích cỡ: ${product?.sizes?.length || 0}`
               )}
             </span>
           </div>
@@ -146,7 +146,7 @@ function ProductCard({ product }) {
             }}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-600 px-4 py-3 text-sm font-bold !text-white transition duration-300 hover:bg-orange-700"
           >
-            <span className="!text-white">View Detail</span>
+            <span className="!text-white">Xem chi tiết</span>
             <ArrowRightOutlined className="!text-white" />
           </button>
         </div>

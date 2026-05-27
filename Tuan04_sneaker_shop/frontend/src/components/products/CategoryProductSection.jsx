@@ -64,7 +64,7 @@ function CategoryProductSection({ category }) {
         setHasNextPage(Boolean(nextPagination.hasNextPage));
         setError('');
       } catch (apiError) {
-        setError(apiError.response?.data?.message || `Unable to load ${category} sneakers right now.`);
+        setError(apiError.response?.data?.message || `Không thể tải sản phẩm cho danh mục ${category} lúc này.`);
         if (replaceProducts) {
           setProducts([]);
           setPagination(INITIAL_PAGINATION);
@@ -117,12 +117,12 @@ function CategoryProductSection({ category }) {
     <section className="glass-panel p-6 sm:p-8">
       <div className="mb-6 flex flex-col gap-3 border-b border-slate-100 pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.28em] text-orange-600">Shop by Category</p>
+          <p className="text-sm font-bold uppercase tracking-[0.28em] text-orange-600">Mua sắm theo danh mục</p>
           <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">{category}</h2>
-          <p className="mt-2 text-sm text-slate-500">Showing products in {category}</p>
+          <p className="mt-2 text-sm text-slate-500">Đang hiển thị sản phẩm thuộc danh mục {category}</p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-          {pagination.total} products available
+          {pagination.total} sản phẩm hiện có
         </div>
       </div>
 
@@ -142,20 +142,20 @@ function CategoryProductSection({ category }) {
         </div>
       ) : error && products.length === 0 ? (
         <ErrorMessage
-          title={`Unable to load ${category}`}
+          title={`Không thể tải danh mục ${category}`}
           message={error}
           minHeight="min-h-64"
           className="rounded-[28px]"
           action={
             <button type="button" onClick={() => loadProducts(1, true)} className="btn-primary">
-              Try again
+              Thử lại
             </button>
           }
         />
       ) : products.length === 0 ? (
         <EmptyState
-          title="No products found"
-          description="This category is active but there are no sneakers to display right now."
+          title="Không tìm thấy sản phẩm"
+          description="Danh mục này đang hoạt động nhưng hiện chưa có sneaker nào để hiển thị."
           minHeight="min-h-64"
           className="rounded-[28px]"
         />
@@ -176,7 +176,11 @@ function CategoryProductSection({ category }) {
       )}
 
       <div ref={sentinelRef} className="mt-6 flex min-h-10 items-center justify-center text-sm font-semibold text-slate-500">
-        {loading && products.length > 0 ? 'Loading more products...' : hasNextPage ? 'Scroll down to load more products' : 'No more products'}
+        {loading && products.length > 0
+          ? 'Đang tải thêm sản phẩm...'
+          : hasNextPage
+            ? 'Cuộn xuống để tải thêm sản phẩm'
+            : 'Đã hiển thị hết sản phẩm'}
       </div>
     </section>
   );

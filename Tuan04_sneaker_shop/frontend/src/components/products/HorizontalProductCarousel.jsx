@@ -31,7 +31,7 @@ function HorizontalProductCarousel({
       <div className="glass-panel overflow-hidden p-6 sm:p-8">
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <p className="text-xs font-extrabold uppercase tracking-[0.32em] text-orange-600">SneakerHub Rankings</p>
+            <p className="text-xs font-extrabold uppercase tracking-[0.32em] text-orange-600">Bảng xếp hạng SneakerHub</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">{title}</h2>
             {subtitle && <p className="mt-3 text-sm leading-7 text-slate-500 sm:text-base">{subtitle}</p>}
           </div>
@@ -39,15 +39,15 @@ function HorizontalProductCarousel({
           <div className="flex flex-wrap items-center gap-3">
             {viewAllLink && (
               <Link to={viewAllLink} className="btn-secondary px-5 py-3">
-                View all
+                Xem tất cả
               </Link>
             )}
             <button type="button" onClick={() => handleScroll('prev')} className="btn-secondary px-4 py-3">
               <ArrowLeftOutlined />
-              Previous
+              Trước
             </button>
             <button type="button" onClick={() => handleScroll('next')} className="btn-primary px-4 py-3">
-              Next
+              Tiếp
               <ArrowRightOutlined />
             </button>
           </div>
@@ -70,7 +70,7 @@ function HorizontalProductCarousel({
             ))}
           </div>
         ) : error ? (
-          <ErrorMessage title="Unable to load this ranking" message={error} minHeight="min-h-64" className="rounded-[28px]" />
+          <ErrorMessage title="Không thể tải bảng xếp hạng này" message={error} minHeight="min-h-64" className="rounded-[28px]" />
         ) : products.length > 0 ? (
           <div ref={scrollContainerRef} className="scrollbar-none flex gap-6 overflow-x-auto scroll-smooth pb-2">
             {products.map((product) => (
@@ -81,8 +81,8 @@ function HorizontalProductCarousel({
           </div>
         ) : (
           <EmptyState
-            title="No products available"
-            description="This ranking will appear here once active products are available from the backend API."
+            title="Chưa có sản phẩm"
+            description="Bảng xếp hạng này sẽ xuất hiện khi backend có sản phẩm đang hoạt động."
             minHeight="min-h-64"
             className="rounded-[28px]"
           />

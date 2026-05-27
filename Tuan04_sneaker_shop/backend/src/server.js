@@ -4,6 +4,12 @@ const express = require('express');
 const cors = require('cors');
 const connectDatabase = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
+const productRoutes = require('./routes/productRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const {
+  startOrderAutoConfirmJob,
+} = require('./services/orderAutoConfirmService');
 
 const app = express();
 
@@ -28,9 +34,11 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
-
-const productRoutes = require('./routes/productRoutes');
 app.use('/api/products', productRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/orders', orderRoutes);
+
+startOrderAutoConfirmJob();
 
 const PORT = process.env.PORT || 5000;
 
