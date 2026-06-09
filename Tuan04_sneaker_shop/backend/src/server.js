@@ -19,6 +19,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Trả về trạng thái hoạt động cơ bản của server khi truy cập root.
 app.get('/', (req, res) => {
   return res.status(200).json({
     success: true,
@@ -26,6 +27,7 @@ app.get('/', (req, res) => {
   });
 });
 
+// Cung cấp endpoint health check để kiểm tra nhanh backend còn sống.
 app.get('/api/health', (req, res) => {
   return res.status(200).json({
     success: true,
@@ -33,11 +35,13 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Gắn các nhóm API xác thực, sản phẩm, giỏ hàng và đơn hàng vào ứng dụng.
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 
+// Khởi động tác vụ tự động xác nhận đơn quá thời gian chờ hủy.
 startOrderAutoConfirmJob();
 
 const PORT = process.env.PORT || 5000;

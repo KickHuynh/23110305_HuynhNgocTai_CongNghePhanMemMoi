@@ -11,6 +11,7 @@ function CategoryProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Tải danh sách danh mục để render từng cụm sản phẩm theo category.
   useEffect(() => {
     const fetchCategories = async () => {
       try {

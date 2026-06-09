@@ -25,6 +25,7 @@ function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Tải dữ liệu các bộ sưu tập chính khi trang chủ được mở lần đầu.
   useEffect(() => {
     const fetchHomeData = async () => {
       try {

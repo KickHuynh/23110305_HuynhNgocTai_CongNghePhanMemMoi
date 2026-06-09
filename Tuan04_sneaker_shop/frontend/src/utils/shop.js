@@ -2,6 +2,7 @@ import { formatCurrency } from './formatCurrency';
 
 export { formatCurrency };
 
+// Tách phần dữ liệu hữu ích từ nhiều kiểu phản hồi API khác nhau.
 export const extractApiData = (response, fallback = []) => {
   if (response?.data?.data !== undefined) {
     return response.data.data;
@@ -14,6 +15,7 @@ export const extractApiData = (response, fallback = []) => {
   return fallback;
 };
 
+// Chuẩn hóa danh sách sản phẩm trả về cho các trang danh mục và tìm kiếm.
 export const extractProductList = (response, fallback = []) => {
   const payload = extractApiData(response, fallback);
 
@@ -28,6 +30,7 @@ export const extractProductList = (response, fallback = []) => {
   return fallback;
 };
 
+// Lấy thông tin phân trang đi kèm danh sách sản phẩm nếu có.
 export const extractPagination = (response, fallback = {}) => {
   const payload = extractApiData(response, null);
 
@@ -75,6 +78,7 @@ export const getProductIdentifier = (product) =>
 export const getProductRoute = (product) =>
   `/products/${getProductIdentifier(product)}`;
 
+// Ánh xạ trạng thái đơn hàng sang nhãn hiển thị và màu badge ở frontend.
 const ORDER_STATUS_META = {
   new: {
     label: 'Đơn hàng mới',
@@ -147,6 +151,7 @@ export const formatDateTime = (value) => {
   }).format(parsedValue);
 };
 
+// Tính mốc thời gian cuối cùng người dùng còn được phép hủy trực tiếp.
 export const getOrderCancellationDeadline = (order) => {
   if (!order?.createdAt) {
     return null;
@@ -155,12 +160,14 @@ export const getOrderCancellationDeadline = (order) => {
   return new Date(new Date(order.createdAt).getTime() + 30 * 60 * 1000);
 };
 
+// Kiểm tra đơn hàng còn nằm trong cửa sổ hủy trực tiếp hay không.
 export const isOrderWithinCancellationWindow = (order) => {
   const deadline = getOrderCancellationDeadline(order);
 
   return Boolean(deadline) && deadline.getTime() > Date.now();
 };
 
+// Tạo ảnh placeholder khi sản phẩm chưa có ảnh từ backend.
 export const createPlaceholderImage = (label = 'SneakerHub') => {
   const safeLabel = String(label)
     .replace(/&/g, '&amp;')
@@ -190,6 +197,7 @@ export const normalizeBooleanQuery = (value) => {
   return '';
 };
 
+// Loại bỏ các tham số rỗng trước khi gửi bộ lọc sản phẩm lên API.
 export const cleanFilterParams = (filters = {}) =>
   Object.entries(filters).reduce((result, [key, value]) => {
     if (value !== '' && value !== undefined && value !== null && value !== false) {
@@ -199,6 +207,7 @@ export const cleanFilterParams = (filters = {}) =>
     return result;
   }, {});
 
+// Làm sạch chuỗi lỗi font hoặc ký tự lạ trước khi hiển thị ra giao diện.
 export const sanitizeText = (value = '') =>
   String(value)
     .replaceAll('Ã¢â‚¬â„¢', "'")

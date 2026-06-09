@@ -5,12 +5,14 @@ const {
   syncLegacyVerificationState,
 } = require('./authService');
 
+// Đồng bộ trạng thái cũ rồi trả hồ sơ an toàn cho frontend.
 const getCurrentUser = async (user) => {
   const normalizedUser = await syncLegacyVerificationState(user);
 
   return sanitizeUser(normalizedUser);
 };
 
+// Cập nhật hồ sơ người dùng và kiểm tra trùng email hoặc mã sinh viên.
 const updateCurrentUser = async (userId, payload) => {
   const user = await User.findById(userId);
 

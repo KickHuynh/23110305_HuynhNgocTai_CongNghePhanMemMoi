@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
+// Lưu thông tin tài khoản và trạng thái xác thực email của người dùng.
 const userSchema = new mongoose.Schema(
   {
     fullName: {
@@ -43,21 +44,25 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
+    // Lưu OTP kích hoạt email ở dạng đã băm để tránh lộ dữ liệu nhạy cảm.
     emailVerificationOtp: {
       type: String,
       select: false,
     },
 
+    // Giới hạn thời gian hiệu lực của OTP xác thực email.
     emailVerificationOtpExpires: {
       type: Date,
       select: false,
     },
 
+    // Lưu OTP đặt lại mật khẩu ở dạng đã băm.
     passwordResetOtp: {
       type: String,
       select: false,
     },
 
+    // Giới hạn thời gian dùng OTP đặt lại mật khẩu.
     passwordResetOtpExpires: {
       type: Date,
       select: false,
@@ -68,6 +73,7 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+// Chỉ băm lại mật khẩu khi người dùng vừa thay đổi trường password.
 userSchema.pre('save', async function () {
   if (!this.isModified('password')) {
     return;
@@ -77,6 +83,7 @@ userSchema.pre('save', async function () {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
+// So sánh mật khẩu đăng nhập với mật khẩu đã băm trong database.
 userSchema.methods.comparePassword = async function (enteredPassword) {
   return bcrypt.compare(enteredPassword, this.password);
 };

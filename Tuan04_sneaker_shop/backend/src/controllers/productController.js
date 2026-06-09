@@ -1,5 +1,6 @@
 const productService = require('../services/productService');
 
+// Trả lỗi nghiệp vụ sản phẩm theo cùng một định dạng JSON.
 const handleError = (res, error, fallbackMessage) => {
   return res.status(error.statusCode || 500).json({
     success: false,
@@ -8,6 +9,7 @@ const handleError = (res, error, fallbackMessage) => {
   });
 };
 
+// Lấy danh sách sản phẩm có hỗ trợ lọc, sắp xếp và phân trang.
 exports.getProducts = async (req, res) => {
   try {
     const data = await productService.getProducts(req.query);
@@ -22,6 +24,7 @@ exports.getProducts = async (req, res) => {
   }
 };
 
+// Lấy chi tiết một sản phẩm theo id hoặc slug.
 exports.getProductById = async (req, res) => {
   try {
     const product = await productService.getProductById(req.params.id);
@@ -36,6 +39,7 @@ exports.getProductById = async (req, res) => {
   }
 };
 
+// Lấy danh sách danh mục sản phẩm đang hoạt động.
 exports.getCategories = async (req, res) => {
   try {
     const categories = await productService.getCategories();
@@ -50,6 +54,7 @@ exports.getCategories = async (req, res) => {
   }
 };
 
+// Lấy các sản phẩm mới để hiển thị trên trang chủ.
 exports.getNewProducts = async (req, res) => {
   try {
     const products = await productService.getNewProducts();
@@ -64,6 +69,7 @@ exports.getNewProducts = async (req, res) => {
   }
 };
 
+// Lấy các sản phẩm được gắn cờ bán chạy.
 exports.getBestSellerProducts = async (req, res) => {
   try {
     const products = await productService.getBestSellerProducts();
@@ -78,6 +84,7 @@ exports.getBestSellerProducts = async (req, res) => {
   }
 };
 
+// Lấy các sản phẩm đang có khuyến mãi.
 exports.getPromotionProducts = async (req, res) => {
   try {
     const products = await productService.getPromotionProducts();
@@ -92,6 +99,7 @@ exports.getPromotionProducts = async (req, res) => {
   }
 };
 
+// Lấy top sản phẩm bán chạy theo giới hạn client yêu cầu.
 exports.getTopBestSellers = async (req, res) => {
   try {
     const products = await productService.getTopBestSellers(req.query.limit);
@@ -106,6 +114,7 @@ exports.getTopBestSellers = async (req, res) => {
   }
 };
 
+// Lấy top sản phẩm có nhiều lượt xem nhất.
 exports.getTopMostViewed = async (req, res) => {
   try {
     const products = await productService.getTopMostViewed(req.query.limit);
@@ -120,6 +129,7 @@ exports.getTopMostViewed = async (req, res) => {
   }
 };
 
+// Lấy danh sách sản phẩm liên quan để gợi ý ở trang chi tiết.
 exports.getRelatedProducts = async (req, res) => {
   try {
     const relatedProducts = await productService.getRelatedProducts(req.params.id);

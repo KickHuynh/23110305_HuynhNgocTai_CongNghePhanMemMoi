@@ -10,6 +10,7 @@ const createServiceError = (message, statusCode = 500) => {
   return error;
 };
 
+// Chọn giá bán thực tế để lưu snapshot trong giỏ hàng.
 const getEffectivePrice = (product) => {
   const price = Number(product?.price || 0);
   const salePrice = Number(product?.salePrice || 0);
@@ -24,6 +25,7 @@ const getPrimaryImage = (product) =>
 
 const normalizeSelection = (value) => String(value || '').trim();
 
+// Tính lại tổng số lượng và tạm tính sau mỗi thay đổi của giỏ hàng.
 const recalculateCart = (cart) => {
   cart.totalItems = cart.items.reduce(
     (total, item) => total + Number(item.quantity || 0),
@@ -38,6 +40,7 @@ const recalculateCart = (cart) => {
   return cart;
 };
 
+// Tạo giỏ hàng rỗng nếu người dùng chưa có giỏ hàng trước đó.
 const ensureCart = async (userId) => {
   return Cart.findOneAndUpdate(
     { user: userId },
@@ -57,6 +60,7 @@ const ensureCart = async (userId) => {
   );
 };
 
+// Kiểm tra sản phẩm, size và màu còn hợp lệ trước khi thêm vào giỏ.
 const validateProductAvailability = (product, size, color) => {
   if (!product) {
     throw createServiceError('Product not found', 404);
@@ -83,6 +87,7 @@ const validateProductAvailability = (product, size, color) => {
   }
 };
 
+// Đồng bộ snapshot giá, ảnh và tồn kho của từng dòng trong giỏ hàng.
 const syncCartSnapshots = async (cart) => {
   if (!cart || cart.items.length === 0) {
     return {
@@ -162,6 +167,7 @@ const syncCartSnapshots = async (cart) => {
   };
 };
 
+// Lấy giỏ hàng của người dùng và cập nhật lại snapshot nếu cần.
 const getMyCart = async (userId) => {
   const cart = await ensureCart(userId);
   const syncedCart = await syncCartSnapshots(cart);
@@ -176,6 +182,7 @@ const getMyCart = async (userId) => {
   };
 };
 
+// Thêm sản phẩm mới vào giỏ hoặc cộng dồn với dòng đã chọn cùng biến thể.
 const addToCart = async (userId, payload = {}) => {
   const { productId, quantity } = payload;
   const size = normalizeSelection(payload.size);
@@ -217,6 +224,7 @@ const addToCart = async (userId, payload = {}) => {
   );
 
   if (existingItem) {
+    // Cộng dồn số lượng khi người dùng thêm lại cùng sản phẩm, size và màu.
     const nextQuantity = Number(existingItem.quantity || 0) + parsedQuantity;
 
     if (nextQuantity > Number(product.stock || 0)) {
@@ -232,6 +240,7 @@ const addToCart = async (userId, payload = {}) => {
     existingItem.price = getEffectivePrice(product);
     existingItem.stockSnapshot = Number(product.stock || 0);
   } else {
+    // Tạo dòng giỏ hàng mới khi chưa tồn tại biến thể tương ứng.
     cart.items.push({
       product: product._id,
       name: product.name,
@@ -253,6 +262,7 @@ const addToCart = async (userId, payload = {}) => {
   };
 };
 
+// Cập nhật số lượng của một dòng sản phẩm đang có trong giỏ hàng.
 const updateCartItem = async (userId, itemId, payload = {}) => {
   const parsedQuantity = Number(payload.quantity);
   const cart = await ensureCart(userId);
@@ -295,6 +305,7 @@ const updateCartItem = async (userId, itemId, payload = {}) => {
   };
 };
 
+// Xóa một dòng sản phẩm cụ thể khỏi giỏ hàng hiện tại.
 const removeCartItem = async (userId, itemId) => {
   const cart = await ensureCart(userId);
   const item = cart.items.id(itemId);
@@ -313,6 +324,7 @@ const removeCartItem = async (userId, itemId) => {
   };
 };
 
+// Làm rỗng toàn bộ giỏ hàng sau khi người dùng yêu cầu.
 const clearCart = async (userId) => {
   const cart = await ensureCart(userId);
 

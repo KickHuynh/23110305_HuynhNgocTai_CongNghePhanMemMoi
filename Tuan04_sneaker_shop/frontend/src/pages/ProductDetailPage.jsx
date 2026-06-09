@@ -28,6 +28,7 @@ function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
 
+  // Tải chi tiết sản phẩm và danh sách liên quan khi id trên URL thay đổi.
   useEffect(() => {
     const fetchProductDetails = async () => {
       try {
@@ -109,6 +110,7 @@ function ProductDetailPage() {
   const saleAmount = hasSalePrice(product) ? Number(product.price) - Number(product.salePrice) : 0;
   const formattedViews = Number(product.views || 0).toLocaleString('vi-VN');
 
+  // Kiểm tra đăng nhập, biến thể và thêm sản phẩm vào giỏ hàng hiện tại.
   const handleAddToCart = async () => {
     if (!getStoredToken()) {
       navigate('/login', {

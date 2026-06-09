@@ -1,5 +1,6 @@
 const userService = require('../services/userService');
 
+// Chuẩn hóa phản hồi lỗi cho các API hồ sơ người dùng.
 const handleError = (res, error, fallbackMessage) => {
   return res.status(error.statusCode || 500).json({
     success: false,
@@ -7,6 +8,7 @@ const handleError = (res, error, fallbackMessage) => {
   });
 };
 
+// Lấy hồ sơ của người dùng đã được xác thực bằng JWT.
 const getCurrentUser = async (req, res) => {
   try {
     const user = await userService.getCurrentUser(req.user);
@@ -23,6 +25,7 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
+// Cập nhật các trường hồ sơ được phép của người dùng hiện tại.
 const updateCurrentUser = async (req, res) => {
   try {
     const user = await userService.updateCurrentUser(req.user._id, req.body);

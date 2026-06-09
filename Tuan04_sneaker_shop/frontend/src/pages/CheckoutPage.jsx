@@ -59,6 +59,7 @@ function CheckoutPage() {
   const discount = 0;
   const total = cart.subtotal + shippingFee - discount;
 
+  // Tải giỏ hàng để kiểm tra dữ liệu checkout và tính tổng tiền hiện tại.
   useEffect(() => {
     const fetchCart = async () => {
       try {
@@ -80,12 +81,13 @@ function CheckoutPage() {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormData((current) => ({
-      ...current,
-      [name]: value,
-    }));
+      setFormData((current) => ({
+        ...current,
+        [name]: value,
+      }));
   };
 
+  // Gửi thông tin giao hàng để backend tạo đơn COD từ giỏ hàng hiện tại.
   const handleSubmit = async (event) => {
     event.preventDefault();
 

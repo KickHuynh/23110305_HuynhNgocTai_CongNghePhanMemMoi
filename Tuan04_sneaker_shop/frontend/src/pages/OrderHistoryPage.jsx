@@ -23,6 +23,7 @@ function OrderHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Tải lịch sử đơn hàng của người dùng khi trang được mở lần đầu.
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -42,6 +43,7 @@ function OrderHistoryPage() {
     fetchOrders();
   }, []);
 
+  // Tính nhanh số đơn đang xử lý và tổng giá trị đơn hàng đã tạo.
   const summary = useMemo(() => {
     const activeCount = orders.filter((order) =>
       ['new', 'confirmed', 'preparing', 'shipping', 'cancel_requested'].includes(order.status)

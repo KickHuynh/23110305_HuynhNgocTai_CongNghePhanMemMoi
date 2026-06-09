@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Khai báo các trạng thái chính trong vòng đời xử lý đơn hàng.
 const ORDER_STATUS = {
   NEW: 'new',
   CONFIRMED: 'confirmed',
@@ -15,6 +16,7 @@ const PAYMENT_METHOD_VALUES = ['COD'];
 const PAYMENT_STATUS_VALUES = ['unpaid', 'paid'];
 const STATUS_CHANGED_BY_VALUES = ['system', 'user', 'admin'];
 
+// Lưu snapshot sản phẩm tại thời điểm tạo đơn để tránh lệ thuộc dữ liệu hiện tại.
 const orderItemSchema = new mongoose.Schema(
   {
     product: {
@@ -58,6 +60,7 @@ const orderItemSchema = new mongoose.Schema(
   }
 );
 
+// Lưu địa chỉ giao hàng được người dùng nhập khi checkout.
 const shippingAddressSchema = new mongoose.Schema(
   {
     fullName: {
@@ -101,6 +104,7 @@ const shippingAddressSchema = new mongoose.Schema(
   }
 );
 
+// Lưu timeline thay đổi trạng thái để theo dõi và giải trình đơn hàng.
 const statusHistorySchema = new mongoose.Schema(
   {
     status: {
@@ -128,6 +132,7 @@ const statusHistorySchema = new mongoose.Schema(
   }
 );
 
+// Lưu toàn bộ thông tin đơn hàng, thanh toán COD và lịch sử xử lý.
 const orderSchema = new mongoose.Schema(
   {
     user: {
@@ -187,6 +192,7 @@ const orderSchema = new mongoose.Schema(
       type: [statusHistorySchema],
       default: [],
     },
+    // Ghi lại thông tin hủy đơn hoặc yêu cầu hủy của người dùng.
     cancelInfo: {
       reason: {
         type: String,

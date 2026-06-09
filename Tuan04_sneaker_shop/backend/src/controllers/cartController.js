@@ -1,5 +1,6 @@
 const cartService = require('../services/cartService');
 
+// Chuẩn hóa lỗi từ service giỏ hàng trước khi trả về frontend.
 const handleError = (res, error, fallbackMessage) => {
   return res.status(error.statusCode || 500).json({
     success: false,
@@ -7,6 +8,7 @@ const handleError = (res, error, fallbackMessage) => {
   });
 };
 
+// Trả về giỏ hàng hiện tại của người dùng đăng nhập.
 const getMyCart = async (req, res) => {
   try {
     const result = await cartService.getMyCart(req.user._id);
@@ -23,6 +25,7 @@ const getMyCart = async (req, res) => {
   }
 };
 
+// Thêm sản phẩm vào giỏ hàng hoặc cộng dồn với dòng đã có.
 const addToCart = async (req, res) => {
   try {
     const result = await cartService.addToCart(req.user._id, req.body);
@@ -39,6 +42,7 @@ const addToCart = async (req, res) => {
   }
 };
 
+// Cập nhật số lượng của một dòng sản phẩm trong giỏ hàng.
 const updateCartItem = async (req, res) => {
   try {
     const result = await cartService.updateCartItem(
@@ -59,6 +63,7 @@ const updateCartItem = async (req, res) => {
   }
 };
 
+// Xóa một sản phẩm cụ thể khỏi giỏ hàng.
 const removeCartItem = async (req, res) => {
   try {
     const result = await cartService.removeCartItem(
@@ -78,6 +83,7 @@ const removeCartItem = async (req, res) => {
   }
 };
 
+// Làm rỗng giỏ hàng của người dùng hiện tại.
 const clearCart = async (req, res) => {
   try {
     const result = await cartService.clearCart(req.user._id);

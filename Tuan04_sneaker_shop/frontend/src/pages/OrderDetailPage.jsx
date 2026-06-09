@@ -49,6 +49,7 @@ function OrderDetailPage() {
   const [cancelReason, setCancelReason] = useState('');
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
 
+  // Tải chi tiết đơn hàng và timeline trạng thái theo id trên URL.
   useEffect(() => {
     const fetchOrder = async () => {
       try {
@@ -78,6 +79,7 @@ function OrderDetailPage() {
   const cancellationDeadline = getOrderCancellationDeadline(order);
   const statusHistory = Array.isArray(order?.statusHistory) ? order.statusHistory : [];
 
+  // Gửi yêu cầu hủy đơn hoặc hủy trực tiếp tùy vào trạng thái hiện tại.
   const handleCancel = async () => {
     const confirmationMessage = canRequestCancellation
       ? 'Bạn có muốn gửi yêu cầu hủy đơn đến shop không?'

@@ -1,5 +1,6 @@
 const authService = require('../services/authService');
 
+// Chuẩn hóa phản hồi lỗi từ service trước khi trả về client.
 const handleError = (res, error, fallbackMessage) => {
   const response = {
     success: false,
@@ -17,6 +18,7 @@ const handleError = (res, error, fallbackMessage) => {
   return res.status(error.statusCode || 500).json(response);
 };
 
+// Nhận dữ liệu đăng ký và trả kết quả tạo tài khoản chờ xác thực email.
 const register = async (req, res) => {
   try {
     const result = await authService.register(req.body);
@@ -31,6 +33,7 @@ const register = async (req, res) => {
   }
 };
 
+// Xử lý xác thực OTP đăng ký và trả JWT nếu hợp lệ.
 const verifyRegisterOtp = async (req, res) => {
   try {
     const result = await authService.verifyRegisterOtp(req.body);
@@ -47,6 +50,7 @@ const verifyRegisterOtp = async (req, res) => {
   }
 };
 
+// Gửi lại OTP xác thực cho tài khoản chưa kích hoạt.
 const resendRegisterOtp = async (req, res) => {
   try {
     const result = await authService.resendRegisterOtp(req.body);
@@ -61,6 +65,7 @@ const resendRegisterOtp = async (req, res) => {
   }
 };
 
+// Xử lý đăng nhập và trả về phiên làm việc cho frontend.
 const login = async (req, res) => {
   try {
     const result = await authService.login(req.body);
@@ -77,6 +82,7 @@ const login = async (req, res) => {
   }
 };
 
+// Tiếp nhận yêu cầu gửi OTP đặt lại mật khẩu qua email.
 const forgotPassword = async (req, res) => {
   try {
     const result = await authService.forgotPassword(req.body);
@@ -91,6 +97,7 @@ const forgotPassword = async (req, res) => {
   }
 };
 
+// Đặt lại mật khẩu khi email và OTP đều hợp lệ.
 const resetPassword = async (req, res) => {
   try {
     const result = await authService.resetPassword(req.body);

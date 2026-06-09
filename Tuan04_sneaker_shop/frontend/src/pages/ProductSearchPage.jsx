@@ -38,6 +38,7 @@ const filterLabels = {
   isBestSeller: 'Bán chạy',
 };
 
+// Đồng bộ bộ lọc từ URL để hỗ trợ chia sẻ link tìm kiếm.
 const parseFiltersFromSearchParams = (searchParams) => {
   const parsedFilters = { ...defaultFilters };
 
@@ -51,6 +52,7 @@ const parseFiltersFromSearchParams = (searchParams) => {
   return parsedFilters;
 };
 
+// Chuyển tham số trang hiện tại từ URL thành số hợp lệ.
 const parsePageFromSearchParams = (searchParams) => {
   const page = Number.parseInt(searchParams.get('page') || '1', 10);
 
@@ -61,6 +63,7 @@ const parsePageFromSearchParams = (searchParams) => {
   return page;
 };
 
+// Tạo lại query string từ bộ lọc hiện tại để giữ state trên URL.
 const buildSearchParams = (filters, page = 1) => {
   const params = new URLSearchParams();
   const cleanedFilters = cleanFilterParams(filters);
@@ -79,6 +82,7 @@ const buildSearchParams = (filters, page = 1) => {
   return params;
 };
 
+// Rút metadata từ danh sách sản phẩm để dựng bộ lọc phía client.
 const getMetadataFromProducts = (products) => ({
   categories: [...new Set(products.map((product) => product.category).filter(Boolean))].sort(),
   brands: [...new Set(products.map((product) => product.brand).filter(Boolean))].sort(),
@@ -105,6 +109,7 @@ function ProductSearchPage() {
 
   const searchParamString = searchParams.toString();
 
+  // Tải danh mục, thương hiệu, size và màu để dựng panel lọc sản phẩm.
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
@@ -125,6 +130,7 @@ function ProductSearchPage() {
     fetchMetadata();
   }, []);
 
+  // Tải lại sản phẩm mỗi khi bộ lọc hoặc số trang trên URL thay đổi.
   useEffect(() => {
     const parsedSearchParams = new URLSearchParams(searchParamString);
     const parsedFilters = parseFiltersFromSearchParams(parsedSearchParams);
@@ -178,24 +184,28 @@ function ProductSearchPage() {
     return true;
   });
 
+  // Áp dụng bộ lọc hiện tại lên URL để kích hoạt gọi API mới.
   const applyFilters = () => {
     setSearchParams(buildSearchParams(filters, 1));
     setMobileFiltersOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Xóa toàn bộ bộ lọc và quay về danh sách mặc định.
   const resetFilters = () => {
     setFilters(defaultFilters);
     setSearchParams(new URLSearchParams());
     setMobileFiltersOpen(false);
   };
 
+  // Gỡ một tiêu chí lọc khỏi URL và tải lại danh sách sản phẩm.
   const removeFilter = (key) => {
     const nextFilters = { ...filters, [key]: defaultFilters[key] };
     setFilters(nextFilters);
     setSearchParams(buildSearchParams(nextFilters, 1));
   };
 
+  // Chuyển trang kết quả trong khi vẫn giữ nguyên bộ lọc hiện tại.
   const handlePageChange = (nextPage) => {
     if (nextPage < 1 || nextPage > pagination.totalPages || nextPage === pagination.page) {
       return;

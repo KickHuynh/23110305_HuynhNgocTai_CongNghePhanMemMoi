@@ -16,6 +16,7 @@ function AdminProfilePage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(true);
 
+  // Tải thông tin admin hiện tại để xác nhận luồng phân quyền hoạt động đúng.
   useEffect(() => {
     const token = getStoredToken();
 

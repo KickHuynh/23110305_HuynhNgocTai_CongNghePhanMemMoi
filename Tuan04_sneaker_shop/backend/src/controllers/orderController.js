@@ -1,5 +1,6 @@
 const orderService = require('../services/orderService');
 
+// Chuẩn hóa lỗi từ service đơn hàng trước khi trả về frontend.
 const handleError = (res, error, fallbackMessage) => {
   return res.status(error.statusCode || 500).json({
     success: false,
@@ -7,6 +8,7 @@ const handleError = (res, error, fallbackMessage) => {
   });
 };
 
+// Tạo đơn hàng mới từ giỏ hàng hiện tại của người dùng.
 const createOrderFromCart = async (req, res) => {
   try {
     const result = await orderService.createOrderFromCart(req.user._id, req.body);
@@ -23,6 +25,7 @@ const createOrderFromCart = async (req, res) => {
   }
 };
 
+// Trả về toàn bộ lịch sử đơn hàng của người dùng hiện tại.
 const getMyOrders = async (req, res) => {
   try {
     const result = await orderService.getMyOrders(req.user._id);
@@ -39,6 +42,7 @@ const getMyOrders = async (req, res) => {
   }
 };
 
+// Lấy chi tiết một đơn hàng thuộc quyền sở hữu của người dùng.
 const getMyOrderById = async (req, res) => {
   try {
     const result = await orderService.getMyOrderById(
@@ -58,6 +62,7 @@ const getMyOrderById = async (req, res) => {
   }
 };
 
+// Xử lý hủy đơn trực tiếp hoặc gửi yêu cầu hủy đến shop.
 const cancelMyOrder = async (req, res) => {
   try {
     const result = await orderService.cancelMyOrder(
@@ -78,6 +83,7 @@ const cancelMyOrder = async (req, res) => {
   }
 };
 
+// Cho phép admin đổi trạng thái xử lý của đơn hàng.
 const updateOrderStatus = async (req, res) => {
   try {
     const result = await orderService.updateOrderStatus(

@@ -24,6 +24,7 @@ function CategoryProductSection({ category }) {
   const sentinelRef = useRef(null);
   const requestInFlightRef = useRef(false);
 
+  // Tải thêm sản phẩm theo danh mục và hỗ trợ thay mới khi đổi category.
   const loadProducts = useCallback(
     async (nextPage, replaceProducts = false) => {
       if (requestInFlightRef.current) {
@@ -77,6 +78,7 @@ function CategoryProductSection({ category }) {
     [category]
   );
 
+  // Tải trang đầu tiên của danh mục khi component được gắn vào màn hình.
   useEffect(() => {
     const timerId = window.setTimeout(() => {
       loadProducts(1, true);
@@ -85,6 +87,7 @@ function CategoryProductSection({ category }) {
     return () => window.clearTimeout(timerId);
   }, [loadProducts]);
 
+  // Tự động tải thêm sản phẩm khi người dùng cuộn đến cuối danh sách.
   useEffect(() => {
     if (!sentinelRef.current) {
       return undefined;

@@ -21,6 +21,7 @@ function RegisterPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Chuyển người dùng đã đăng nhập sang đúng trang hồ sơ thay vì cho đăng ký lại.
   useEffect(() => {
     const token = getStoredToken();
     if (token) {
@@ -33,6 +34,7 @@ function RegisterPage() {
     setFormData((current) => ({ ...current, [name]: value }));
   };
 
+  // Gửi thông tin đăng ký và chuyển sang màn hình nhập OTP xác thực email.
   const handleSubmit = async (event) => {
     event.preventDefault();
 

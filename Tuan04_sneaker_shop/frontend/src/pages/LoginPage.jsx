@@ -21,6 +21,7 @@ function LoginPage() {
   const [infoMessage, setInfoMessage] = useState(location.state?.message || '');
   const [loading, setLoading] = useState(false);
 
+  // Nếu đã có phiên đăng nhập thì quay lại trang người dùng muốn mở trước đó.
   useEffect(() => {
     const token = getStoredToken();
     if (token) {
@@ -35,6 +36,7 @@ function LoginPage() {
     setFormData((current) => ({ ...current, [name]: value }));
   };
 
+  // Đăng nhập, lưu phiên cục bộ và điều hướng theo role hoặc trang trước đó.
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -69,6 +71,7 @@ function LoginPage() {
         error.response?.data?.data?.requiresEmailVerification === true;
 
       if (shouldVerifyEmail) {
+        // Chuyển sang bước nhập OTP nếu backend báo email chưa xác thực.
         const email = error.response?.data?.data?.email || formData.email.trim().toLowerCase();
 
         setPendingVerificationEmail(email);

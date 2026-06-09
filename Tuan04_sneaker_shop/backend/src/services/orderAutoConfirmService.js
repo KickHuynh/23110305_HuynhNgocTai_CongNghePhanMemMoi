@@ -4,6 +4,7 @@ const ORDER_AUTO_CONFIRM_INTERVAL_MS = 5 * 60 * 1000;
 
 let orderAutoConfirmInterval = null;
 
+// Chạy một lượt quét để tự động xác nhận các đơn đã hết thời gian chờ hủy.
 const runAutoConfirmJob = async () => {
   try {
     const result = await autoConfirmEligibleOrders();
@@ -21,6 +22,7 @@ const runAutoConfirmJob = async () => {
   }
 };
 
+// Khởi động job nền chỉ một lần trong suốt vòng đời server.
 const startOrderAutoConfirmJob = () => {
   if (orderAutoConfirmInterval) {
     return orderAutoConfirmInterval;

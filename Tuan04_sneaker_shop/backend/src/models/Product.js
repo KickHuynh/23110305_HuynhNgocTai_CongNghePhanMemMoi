@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Lưu dữ liệu sản phẩm và các cờ phục vụ lọc, sắp xếp ở frontend.
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -58,7 +59,8 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    isNewProduct: { // Using isNewProduct instead of isNew to avoid conflict with Mongoose's internal isNew
+    // Dùng tên trường riêng để tránh trùng với thuộc tính nội bộ của Mongoose.
+    isNewProduct: {
       type: Boolean,
       default: false,
     },
@@ -89,7 +91,7 @@ const productSchema = new mongoose.Schema(
   }
 );
 
-// Pre-save hook to generate slug if not provided
+// Tự sinh slug từ tên sản phẩm để hỗ trợ route chi tiết dễ đọc hơn.
 productSchema.pre('save', function (next) {
   if (!this.slug) {
     this.slug = this.name

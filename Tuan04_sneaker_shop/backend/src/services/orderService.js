@@ -17,6 +17,7 @@ const createServiceError = (message, statusCode = 500) => {
   return error;
 };
 
+// Chọn giá thực tế của sản phẩm tại thời điểm tạo đơn.
 const getEffectivePrice = (product) => {
   const price = Number(product?.price || 0);
   const salePrice = Number(product?.salePrice || 0);
@@ -43,6 +44,7 @@ const normalizeShippingAddress = (shippingAddress = {}) => ({
 
 const normalizeReason = (reason) => normalizeText(reason);
 
+// Kiểm tra đơn hàng còn nằm trong khoảng 30 phút được phép hủy trực tiếp.
 const isWithinCancellationWindow = (createdAt) => {
   const cancellationDeadline =
     new Date(createdAt).getTime() + CANCEL_WINDOW_MINUTES * 60 * 1000;
@@ -50,6 +52,7 @@ const isWithinCancellationWindow = (createdAt) => {
   return Date.now() <= cancellationDeadline;
 };
 
+// Lưu lại lịch sử chuyển trạng thái để theo dõi vòng đời đơn hàng.
 const appendStatusHistory = (order, status, note, changedBy) => {
   order.statusHistory.push({
     status,
@@ -59,12 +62,14 @@ const appendStatusHistory = (order, status, note, changedBy) => {
   });
 };
 
+// Chặn các thao tác với id đơn hàng không hợp lệ.
 const validateOrderId = (orderId) => {
   if (!mongoose.Types.ObjectId.isValid(orderId || '')) {
     throw createServiceError('Invalid order ID', 400);
   }
 };
 
+// Kiểm tra sản phẩm trong giỏ còn đủ điều kiện để chuyển thành đơn hàng.
 const validateProductChoice = (product, item) => {
   if (!product) {
     throw createServiceError(
@@ -105,6 +110,7 @@ const validateProductChoice = (product, item) => {
   }
 };
 
+// Hoàn lại tồn kho đã giữ trước đó nếu checkout thất bại giữa chừng.
 const rollbackReservedInventory = async (items) => {
   await Promise.all(
     items.map((item) =>
@@ -118,6 +124,7 @@ const rollbackReservedInventory = async (items) => {
   );
 };
 
+// Trả lại tồn kho khi đơn hàng bị hủy sau khi đã tạo thành công.
 const restoreInventoryForOrderItems = async (items) => {
   await Promise.all(
     items.map((item) =>
@@ -131,6 +138,7 @@ const restoreInventoryForOrderItems = async (items) => {
   );
 };
 
+// Xóa giỏ hàng sau khi checkout thành công để tránh đặt trùng lại.
 const clearUserCart = async (userId) => {
   const cart = await Cart.findOne({ user: userId });
 
@@ -144,6 +152,7 @@ const clearUserCart = async (userId) => {
   await cart.save();
 };
 
+// Quy định các bước chuyển trạng thái hợp lệ của đơn hàng.
 const getAllowedStatusTransitions = (currentStatus) => {
   return {
     [ORDER_STATUS.NEW]: [
@@ -172,6 +181,7 @@ const getAllowedStatusTransitions = (currentStatus) => {
   }[currentStatus] || [];
 };
 
+// Tạo đơn COD từ giỏ hàng hiện tại và giữ tồn kho tương ứng.
 const createOrderFromCart = async (userId, payload = {}) => {
   if (!userId) {
     throw createServiceError('You must be logged in to checkout', 401);
@@ -203,6 +213,7 @@ const createOrderFromCart = async (userId, payload = {}) => {
   const orderItems = [];
   let subtotal = 0;
 
+  // Chốt lại giá, biến thể và số lượng hiện có trước khi tạo đơn.
   cart.items.forEach((item) => {
     const product = productsById.get(String(item.product));
 
@@ -236,6 +247,7 @@ const createOrderFromCart = async (userId, payload = {}) => {
   const reservedItems = [];
 
   try {
+    // Giữ tồn kho từng sản phẩm để tránh bán vượt số lượng còn lại.
     for (const item of orderItems) {
       const updatedProduct = await Product.findOneAndUpdate(
         {
@@ -264,6 +276,7 @@ const createOrderFromCart = async (userId, payload = {}) => {
       reservedItems.push(item);
     }
 
+    // Tạo bản ghi đơn hàng sau khi đã giữ được tồn kho cần thiết.
     const order = await Order.create({
       user: userId,
       items: orderItems,
@@ -304,6 +317,7 @@ const createOrderFromCart = async (userId, payload = {}) => {
     };
   } catch (error) {
     if (reservedItems.length > 0) {
+      // Hoàn tồn kho nếu bất kỳ bước nào sau khi giữ hàng bị lỗi.
       await rollbackReservedInventory(reservedItems);
     }
 
@@ -313,6 +327,7 @@ const createOrderFromCart = async (userId, payload = {}) => {
   }
 };
 
+// Lấy toàn bộ đơn hàng của người dùng theo thứ tự mới nhất.
 const getMyOrders = async (userId) => {
   const orders = await Order.find({ user: userId }).sort({ createdAt: -1 });
 
@@ -322,6 +337,7 @@ const getMyOrders = async (userId) => {
   };
 };
 
+// Lấy chi tiết một đơn hàng thuộc về người dùng hiện tại.
 const getMyOrderById = async (userId, orderId) => {
   validateOrderId(orderId);
 
@@ -340,6 +356,7 @@ const getMyOrderById = async (userId, orderId) => {
   };
 };
 
+// Hủy đơn trực tiếp hoặc gửi yêu cầu hủy dựa trên trạng thái xử lý hiện tại.
 const cancelMyOrder = async (userId, orderId, reason) => {
   validateOrderId(orderId);
 
@@ -379,6 +396,7 @@ const cancelMyOrder = async (userId, orderId, reason) => {
   }
 
   if (order.status === ORDER_STATUS.PREPARING) {
+    // Chuyển sang trạng thái yêu cầu hủy khi shop đã bắt đầu chuẩn bị hàng.
     order.status = ORDER_STATUS.CANCEL_REQUESTED;
     order.cancelInfo = {
       ...order.cancelInfo,
@@ -417,6 +435,7 @@ const cancelMyOrder = async (userId, orderId, reason) => {
     );
   }
 
+  // Trả lại tồn kho ngay khi người dùng hủy thành công trong thời gian cho phép.
   await restoreInventoryForOrderItems(order.items);
 
   order.status = ORDER_STATUS.CANCELLED;
@@ -441,6 +460,7 @@ const cancelMyOrder = async (userId, orderId, reason) => {
   };
 };
 
+// Tự động xác nhận các đơn mới khi đã hết thời gian hủy trực tiếp.
 const autoConfirmEligibleOrders = async () => {
   const cutoffTime = new Date(
     Date.now() - CANCEL_WINDOW_MINUTES * 60 * 1000
@@ -487,6 +507,7 @@ const autoConfirmEligibleOrders = async () => {
   };
 };
 
+// Cho phép admin cập nhật trạng thái theo đúng luồng xử lý đơn hàng.
 const updateOrderStatus = async (
   orderId,
   status,
@@ -520,6 +541,7 @@ const updateOrderStatus = async (
   }
 
   if (targetStatus === ORDER_STATUS.CANCELLED) {
+    // Trả lại tồn kho khi admin chuyển đơn sang trạng thái hủy.
     await restoreInventoryForOrderItems(order.items);
     order.cancelInfo = {
       ...order.cancelInfo,

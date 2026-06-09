@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Lưu snapshot sản phẩm đã chọn để giữ thông tin giỏ hàng ổn định.
 const cartItemSchema = new mongoose.Schema(
   {
     product: {
@@ -37,6 +38,7 @@ const cartItemSchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
+    // Ghi nhớ tồn kho tại lần đồng bộ gần nhất để cảnh báo khi checkout.
     stockSnapshot: {
       type: Number,
       default: 0,
@@ -48,6 +50,7 @@ const cartItemSchema = new mongoose.Schema(
   }
 );
 
+// Mỗi người dùng chỉ có một giỏ hàng chứa các dòng sản phẩm đã chọn.
 const cartSchema = new mongoose.Schema(
   {
     user: {

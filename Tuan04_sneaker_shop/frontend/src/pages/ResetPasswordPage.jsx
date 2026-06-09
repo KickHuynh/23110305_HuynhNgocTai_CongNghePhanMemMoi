@@ -30,6 +30,7 @@ function ResetPasswordPage() {
   const [infoMessage, setInfoMessage] = useState(location.state?.message || '');
   const [loading, setLoading] = useState(false);
 
+  // Không cho người đã đăng nhập đi tiếp vào luồng đặt lại mật khẩu.
   useEffect(() => {
     const token = getStoredToken();
 
@@ -38,6 +39,7 @@ function ResetPasswordPage() {
     }
   }, [navigate]);
 
+  // Ghi nhớ email reset để người dùng đổi trang vẫn không mất ngữ cảnh.
   useEffect(() => {
     if (formData.email) {
       setPendingResetEmail(formData.email);
@@ -53,6 +55,7 @@ function ResetPasswordPage() {
     }));
   };
 
+  // Gửi email, OTP và mật khẩu mới để hoàn tất đặt lại mật khẩu.
   const handleSubmit = async (event) => {
     event.preventDefault();
 

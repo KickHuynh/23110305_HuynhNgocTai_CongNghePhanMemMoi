@@ -31,6 +31,7 @@ function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Tải hồ sơ hiện tại từ API bảo vệ và đồng bộ lại phiên local.
   useEffect(() => {
     const token = getStoredToken();
 
@@ -84,6 +85,7 @@ function ProfilePage() {
     setIsEditing(false);
   };
 
+  // Gửi thông tin hồ sơ mới lên backend và cập nhật lại session cục bộ.
   const handleSubmit = async (event) => {
     event.preventDefault();
 

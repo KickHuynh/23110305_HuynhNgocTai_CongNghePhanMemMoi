@@ -35,6 +35,7 @@ function VerifyEmailPage() {
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
 
+  // Không cần xác thực OTP lại nếu người dùng đã có phiên đăng nhập hợp lệ.
   useEffect(() => {
     const token = getStoredToken();
 
@@ -43,12 +44,14 @@ function VerifyEmailPage() {
     }
   }, [navigate]);
 
+  // Ghi nhớ email chờ xác thực để hỗ trợ luồng nhập OTP liên tục.
   useEffect(() => {
     if (email) {
       setPendingVerificationEmail(email);
     }
   }, [email]);
 
+  // Xác thực OTP để kích hoạt tài khoản và tạo phiên đăng nhập ngay.
   const handleVerify = async (event) => {
     event.preventDefault();
 
@@ -87,6 +90,7 @@ function VerifyEmailPage() {
     }
   };
 
+  // Yêu cầu backend gửi lại OTP xác thực cho email hiện tại.
   const handleResendOtp = async () => {
     const normalizedEmail = normalizeEmail(email);
 

@@ -1,5 +1,6 @@
 const rateLimit = require('express-rate-limit');
 
+// Tạo rate limiter dùng chung cho các API nhạy cảm như login và OTP.
 const buildRateLimiter = (windowMs, max) => {
   return rateLimit({
     windowMs,
@@ -15,6 +16,7 @@ const buildRateLimiter = (windowMs, max) => {
   });
 };
 
+// Giới hạn số lần gọi với từng nhóm API để giảm spam và brute force.
 const registerLimiter = buildRateLimiter(15 * 60 * 1000, 5);
 const loginLimiter = buildRateLimiter(15 * 60 * 1000, 5);
 const otpLimiter = buildRateLimiter(10 * 60 * 1000, 5);

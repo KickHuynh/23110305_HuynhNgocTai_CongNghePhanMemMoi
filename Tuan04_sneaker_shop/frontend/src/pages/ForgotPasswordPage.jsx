@@ -16,6 +16,7 @@ function ForgotPasswordPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Không cho người đã đăng nhập quay lại luồng quên mật khẩu.
   useEffect(() => {
     const token = getStoredToken();
 
@@ -24,6 +25,7 @@ function ForgotPasswordPage() {
     }
   }, [navigate]);
 
+  // Gửi email để backend tạo OTP đặt lại mật khẩu.
   const handleSubmit = async (event) => {
     event.preventDefault();
 

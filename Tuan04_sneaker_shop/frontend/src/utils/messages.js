@@ -1,3 +1,4 @@
+// Ánh xạ trực tiếp thông báo backend sang câu tiếng Việt dễ hiểu hơn.
 const EXACT_MESSAGE_MAP = {
   'Validation failed': 'Dữ liệu không hợp lệ.',
   'A valid email is required': 'Vui lòng nhập email hợp lệ.',
@@ -80,6 +81,7 @@ const EXACT_MESSAGE_MAP = {
   'Please try again in a moment.': 'Vui lòng thử lại sau ít phút.',
 };
 
+// Dịch các thông báo động có chứa tên sản phẩm hoặc số lượng tồn kho.
 const PREFIX_TRANSLATORS = [
   {
     test: (message) =>

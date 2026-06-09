@@ -5,6 +5,7 @@ import {
   getStoredUser,
 } from '../api/authApi';
 
+// Chặn truy cập khi chưa đăng nhập hoặc không đúng vai trò được phép.
 function ProtectedRoute({ allowedRoles = [] }) {
   const location = useLocation();
   const token = getStoredToken();

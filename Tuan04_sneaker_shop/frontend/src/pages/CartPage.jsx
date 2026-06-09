@@ -46,6 +46,7 @@ function CartPage() {
       Number(item.quantity || 0) > Number(item.stockSnapshot || 0)
   );
 
+  // Tải lại giỏ hàng từ backend sau các thao tác cập nhật hoặc khi cần đồng bộ.
   const fetchCart = async ({ showLoading = true } = {}) => {
     try {
       if (showLoading) {
@@ -65,6 +66,7 @@ function CartPage() {
     }
   };
 
+  // Tải giỏ hàng khi người dùng mở trang cart lần đầu.
   useEffect(() => {
     let isActive = true;
 
@@ -99,6 +101,7 @@ function CartPage() {
     };
   }, []);
 
+  // Gửi số lượng mới lên backend và đồng bộ lại giỏ hàng nếu có thay đổi.
   const handleQuantityChange = async (itemId, nextQuantity, currentQuantity) => {
     if (nextQuantity === currentQuantity) {
       return;
@@ -118,6 +121,7 @@ function CartPage() {
     }
   };
 
+  // Xóa một dòng sản phẩm khỏi giỏ hàng hiện tại.
   const handleRemoveItem = async (itemId) => {
     try {
       setProcessingItemId(itemId);
@@ -131,6 +135,7 @@ function CartPage() {
     }
   };
 
+  // Xóa toàn bộ giỏ hàng sau khi người dùng xác nhận lại.
   const handleClearCart = async () => {
     if (!window.confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng?')) {
       return;

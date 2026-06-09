@@ -1,6 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
-import { getProfileRouteByRole, getStoredToken, getStoredUser } from '../api/authApi';
+import {
+  getProfileRouteByRole,
+  getStoredToken,
+  getStoredUser,
+} from '../api/authApi';
 import AdminProfilePage from '../pages/AdminProfilePage';
 import CartPage from '../pages/CartPage';
 import CategoryProductsPage from '../pages/CategoryProductsPage';
@@ -18,6 +22,7 @@ import ResetPasswordPage from '../pages/ResetPasswordPage';
 import VerifyOtpPage from '../pages/VerifyOtpPage';
 import ProtectedRoute from './ProtectedRoute';
 
+// Điều hướng người dùng đã đăng nhập đến đúng trang hồ sơ theo role.
 function ProfileRouteRedirect() {
   const token = getStoredToken();
 
@@ -45,6 +50,7 @@ function AppRoutes() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/profile" element={<ProfileRouteRedirect />} />
+        {/* Bảo vệ các trang mua hàng và hồ sơ sinh viên bằng JWT. */}
         <Route element={<ProtectedRoute allowedRoles={['student', 'user']} />}>
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
@@ -52,6 +58,7 @@ function AppRoutes() {
           <Route path="/orders/:orderId" element={<OrderDetailPage />} />
           <Route path="/user/profile" element={<ProfilePage />} />
         </Route>
+        {/* Chỉ cho phép tài khoản admin truy cập khu vực hồ sơ quản trị. */}
         <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
           <Route path="/admin/profile" element={<AdminProfilePage />} />
         </Route>

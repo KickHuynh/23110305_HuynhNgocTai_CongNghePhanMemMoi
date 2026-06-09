@@ -10,6 +10,7 @@ const {
 const OTP_EXPIRES_IN_MINUTES =
   Number.parseInt(process.env.OTP_EXPIRES_IN_MINUTES, 10) || 10;
 
+// Tạo lỗi nghiệp vụ kèm mã trạng thái để controller xử lý thống nhất.
 const createServiceError = (message, statusCode = 500, options = {}) => {
   const error = new Error(message);
   error.statusCode = statusCode;
@@ -20,6 +21,7 @@ const createServiceError = (message, statusCode = 500, options = {}) => {
   return error;
 };
 
+// Phát hành JWT cho người dùng sau khi xác thực thành công.
 const createToken = (userId) => {
   return jwt.sign(
     { id: userId },
@@ -30,10 +32,12 @@ const createToken = (userId) => {
   );
 };
 
+// Xác định trang hồ sơ phù hợp theo vai trò sau khi đăng nhập.
 const getRedirectUrlByRole = (role) => {
   return role === 'admin' ? '/admin/profile' : '/user/profile';
 };
 
+// Loại bỏ các trường nhạy cảm trước khi trả dữ liệu người dùng ra ngoài.
 const sanitizeUser = (user) => {
   const source = user.toObject ? user.toObject() : user;
 
@@ -47,6 +51,7 @@ const sanitizeUser = (user) => {
   };
 };
 
+// Gom token, role và hồ sơ thành phản hồi xác thực chuẩn cho frontend.
 const buildAuthResponse = (user, token) => {
   return {
     token,
@@ -63,6 +68,7 @@ const getOtpExpiryDate = () => {
   return new Date(Date.now() + OTP_EXPIRES_IN_MINUTES * 60 * 1000);
 };
 
+// Đồng bộ trạng thái xác thực email cũ để tương thích dữ liệu trước đây.
 const syncLegacyVerificationState = async (user) => {
   if (!user || typeof user.isEmailVerified === 'boolean') {
     return user;
@@ -84,6 +90,7 @@ const syncLegacyVerificationState = async (user) => {
   return user;
 };
 
+// Báo cho frontend biết tài khoản phải xác thực email trước khi đăng nhập.
 const createEmailVerificationRequiredError = (email) => {
   return createServiceError('Please verify your email before login', 403, {
     code: 'EMAIL_NOT_VERIFIED',
@@ -94,6 +101,7 @@ const createEmailVerificationRequiredError = (email) => {
   });
 };
 
+// Tạo tài khoản mới và lưu OTP xác thực email lần đầu.
 const register = async ({ fullName, email, studentId, password }) => {
   if (!fullName || !email || !studentId || !password) {
     throw createServiceError(
@@ -132,8 +140,10 @@ const register = async ({ fullName, email, studentId, password }) => {
   await user.save();
 
   try {
+    // Gửi OTP kích hoạt ngay sau khi tài khoản được tạo thành công.
     await sendVerificationOtpEmail(user.email, otp);
   } catch (error) {
+    // Xóa tài khoản vừa tạo nếu không gửi được email xác thực.
     await User.findByIdAndDelete(user._id);
     throw createServiceError('Failed to send verification OTP email', 500);
   }
@@ -143,6 +153,7 @@ const register = async ({ fullName, email, studentId, password }) => {
   };
 };
 
+// Kiểm tra OTP đăng ký và kích hoạt tài khoản trước khi cấp JWT.
 const verifyRegisterOtp = async ({ email, otp }) => {
   const normalizedEmail = normalizeEmail(email);
   const user = await User.findOne({ email: normalizedEmail }).select(
@@ -156,6 +167,7 @@ const verifyRegisterOtp = async ({ email, otp }) => {
   await syncLegacyVerificationState(user);
 
   if (user.isEmailVerified) {
+    // Trả lại JWT ngay nếu tài khoản đã được xác thực từ trước.
     const token = createToken(user._id);
 
     return buildAuthResponse(user, token);
@@ -185,6 +197,7 @@ const verifyRegisterOtp = async ({ email, otp }) => {
   return buildAuthResponse(user, token);
 };
 
+// Cấp OTP xác thực mới cho tài khoản chưa hoàn tất kích hoạt.
 const resendRegisterOtp = async ({ email }) => {
   const normalizedEmail = normalizeEmail(email);
   const user = await User.findOne({ email: normalizedEmail }).select(
@@ -217,6 +230,7 @@ const resendRegisterOtp = async ({ email }) => {
   try {
     await sendVerificationOtpEmail(user.email, otp);
   } catch (error) {
+    // Khôi phục OTP cũ nếu gửi mail thất bại để tránh mất trạng thái xác thực.
     user.emailVerificationOtp = previousOtp;
     user.emailVerificationOtpExpires = previousOtpExpiry;
     await user.save();
@@ -234,6 +248,7 @@ const resendRegisterOtp = async ({ email }) => {
   };
 };
 
+// Xác thực thông tin đăng nhập và chỉ cấp JWT cho email đã được duyệt.
 const login = async ({ email, password }) => {
   if (!email || !password) {
     throw createServiceError('Please provide email and password', 400);
@@ -265,6 +280,7 @@ const login = async ({ email, password }) => {
   return buildAuthResponse(user, token);
 };
 
+// Tạo OTP đặt lại mật khẩu và gửi về email đã đăng ký.
 const forgotPassword = async ({ email }) => {
   const normalizedEmail = normalizeEmail(email);
   const user = await User.findOne({ email: normalizedEmail });
@@ -285,6 +301,7 @@ const forgotPassword = async ({ email }) => {
   };
 };
 
+// Đặt mật khẩu mới sau khi kiểm tra OTP đặt lại còn hiệu lực.
 const resetPassword = async ({ email, otp, newPassword }) => {
   const normalizedEmail = normalizeEmail(email);
   const user = await User.findOne({ email: normalizedEmail }).select(

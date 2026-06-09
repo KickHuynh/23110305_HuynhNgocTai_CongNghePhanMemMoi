@@ -52,6 +52,7 @@ function Navbar() {
   const role = getUserRole(user);
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
+  // Xóa phiên local và đưa người dùng về màn hình đăng nhập.
   const handleLogout = () => {
     clearAuthSession();
     setMobileMenuOpen(false);

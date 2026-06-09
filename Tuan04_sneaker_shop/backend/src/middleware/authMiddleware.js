@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+// Kiểm tra JWT và gắn thông tin người dùng vào request trước khi vào API bảo vệ.
 const protect = async (req, res, next) => {
   try {
     let token;
@@ -40,6 +41,7 @@ const protect = async (req, res, next) => {
   }
 };
 
+// Chặn truy cập nếu vai trò hiện tại không nằm trong danh sách được phép.
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {

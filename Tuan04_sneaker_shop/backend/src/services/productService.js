@@ -19,6 +19,7 @@ const parsePositiveInt = (value, fallback) => {
   return parsedValue;
 };
 
+// Cho phép tìm sản phẩm theo ObjectId hoặc slug trên cùng một endpoint.
 const resolveProductFilter = (identifier) => {
   if (mongoose.Types.ObjectId.isValid(identifier)) {
     return {
@@ -29,6 +30,7 @@ const resolveProductFilter = (identifier) => {
   return { slug: identifier };
 };
 
+// Chuyển các tham số lọc từ query string thành điều kiện truy vấn MongoDB.
 const buildProductQuery = (params) => {
   const {
     keyword,
@@ -86,6 +88,7 @@ const buildProductQuery = (params) => {
   return query;
 };
 
+// Chuyển lựa chọn sắp xếp của client thành thứ tự truy vấn phù hợp.
 const buildProductSort = (sort) => {
   if (sort === 'price_asc') return { price: 1 };
   if (sort === 'price_desc') return { price: -1 };
@@ -95,6 +98,7 @@ const buildProductSort = (sort) => {
   return { createdAt: -1 };
 };
 
+// Lấy danh sách sản phẩm theo bộ lọc, sắp xếp và phân trang.
 const getProducts = async (params) => {
   const query = buildProductQuery(params);
   const sortObj = buildProductSort(params.sort);
@@ -122,6 +126,7 @@ const getProducts = async (params) => {
   };
 };
 
+// Lấy chi tiết sản phẩm và tăng bộ đếm lượt xem cho trang chi tiết.
 const getProductById = async (productId) => {
   const product = await Product.findOneAndUpdate(
     resolveProductFilter(productId),
@@ -136,24 +141,28 @@ const getProductById = async (productId) => {
   return product;
 };
 
+// Lấy các sản phẩm được đánh dấu là mới.
 const getNewProducts = async () => {
   return Product.find({ status: 'active', isNewProduct: true })
     .sort({ createdAt: -1 })
     .limit(8);
 };
 
+// Lấy các sản phẩm được đánh dấu là bán chạy.
 const getBestSellerProducts = async () => {
   return Product.find({ status: 'active', isBestSeller: true })
     .sort({ sold: -1 })
     .limit(8);
 };
 
+// Lấy các sản phẩm đang bật cờ khuyến mãi.
 const getPromotionProducts = async () => {
   return Product.find({ status: 'active', isPromotion: true })
     .sort({ createdAt: -1 })
     .limit(8);
 };
 
+// Lấy danh mục đang hoạt động để frontend dựng bộ lọc.
 const getCategories = async () => {
   const categories = await Product.distinct('category', { status: 'active' });
 
@@ -161,7 +170,8 @@ const getCategories = async () => {
     firstCategory.localeCompare(secondCategory)
   );
 };
-//top best seller
+
+// Lấy top sản phẩm bán chạy theo giới hạn được yêu cầu.
 const getTopBestSellers = async (limit = 10) => {
   const parsedLimit = parsePositiveInt(limit, 10);
 
@@ -170,6 +180,7 @@ const getTopBestSellers = async (limit = 10) => {
     .limit(parsedLimit);
 };
 
+// Lấy top sản phẩm có lượt xem cao nhất theo giới hạn được yêu cầu.
 const getTopMostViewed = async (limit = 10) => {
   const parsedLimit = parsePositiveInt(limit, 10);
 
@@ -178,6 +189,7 @@ const getTopMostViewed = async (limit = 10) => {
     .limit(parsedLimit);
 };
 
+// Lấy các sản phẩm cùng danh mục để gợi ý ở trang chi tiết.
 const getRelatedProducts = async (productId) => {
   const product = await Product.findOne(resolveProductFilter(productId));
 

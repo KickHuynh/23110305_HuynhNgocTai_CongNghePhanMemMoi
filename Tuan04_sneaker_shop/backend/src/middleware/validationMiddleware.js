@@ -38,6 +38,7 @@ const isPositiveInteger = (value) => {
   return Number.isInteger(parsedValue) && parsedValue >= 1;
 };
 
+// Kiểm tra dữ liệu đăng ký trước khi tạo tài khoản mới.
 const validateRegister = (req, res, next) => {
   const { fullName, email, studentId, password } = req.body;
   const errors = [];
@@ -69,6 +70,7 @@ const validateRegister = (req, res, next) => {
   return next();
 };
 
+// Kiểm tra dữ liệu đăng nhập trước khi xác thực tài khoản.
 const validateLogin = (req, res, next) => {
   const { email, password } = req.body;
   const errors = [];
@@ -90,6 +92,7 @@ const validateLogin = (req, res, next) => {
   return next();
 };
 
+// Kiểm tra email và OTP trước khi kích hoạt tài khoản.
 const validateVerifyOtp = (req, res, next) => {
   const { email, otp } = req.body;
   const errors = [];
@@ -112,6 +115,7 @@ const validateVerifyOtp = (req, res, next) => {
   return next();
 };
 
+// Kiểm tra email trước khi gửi OTP đặt lại mật khẩu.
 const validateForgotPassword = (req, res, next) => {
   const { email } = req.body;
   const errors = [];
@@ -129,6 +133,7 @@ const validateForgotPassword = (req, res, next) => {
   return next();
 };
 
+// Kiểm tra email trước khi gửi lại OTP xác thực đăng ký.
 const validateResendOtp = (req, res, next) => {
   const { email } = req.body;
   const errors = [];
@@ -146,6 +151,7 @@ const validateResendOtp = (req, res, next) => {
   return next();
 };
 
+// Kiểm tra email, OTP và mật khẩu mới trước khi reset password.
 const validateResetPassword = (req, res, next) => {
   const { email, otp, newPassword } = req.body;
   const errors = [];
@@ -172,6 +178,7 @@ const validateResetPassword = (req, res, next) => {
   return next();
 };
 
+// Chỉ cho phép cập nhật các trường hồ sơ hợp lệ của người dùng.
 const validateUpdateProfile = (req, res, next) => {
   const errors = [];
 
@@ -224,6 +231,7 @@ const validateUpdateProfile = (req, res, next) => {
   return next();
 };
 
+// Kiểm tra dữ liệu thêm sản phẩm vào giỏ hàng từ frontend.
 const validateAddToCart = (req, res, next) => {
   const { productId, size, color, quantity } = req.body;
   const errors = [];
@@ -256,6 +264,7 @@ const validateAddToCart = (req, res, next) => {
   return next();
 };
 
+// Kiểm tra số lượng mới khi người dùng sửa giỏ hàng.
 const validateUpdateCartItem = (req, res, next) => {
   const { quantity } = req.body;
   const errors = [];
@@ -273,6 +282,7 @@ const validateUpdateCartItem = (req, res, next) => {
   return next();
 };
 
+// Kiểm tra thông tin giao hàng và phương thức COD trước khi checkout.
 const validateCheckout = (req, res, next) => {
   const { shippingAddress, paymentMethod } = req.body;
   const errors = [];
@@ -319,6 +329,7 @@ const validateCheckout = (req, res, next) => {
   return next();
 };
 
+// Chuẩn hóa lý do hủy đơn nếu người dùng có gửi kèm.
 const validateCancelOrder = (req, res, next) => {
   const { reason } = req.body || {};
   const errors = [];
@@ -342,6 +353,7 @@ const validateCancelOrder = (req, res, next) => {
   return next();
 };
 
+// Kiểm tra trạng thái mới khi admin cập nhật tiến độ đơn hàng.
 const validateUpdateOrderStatus = (req, res, next) => {
   const { status, note } = req.body;
   const errors = [];

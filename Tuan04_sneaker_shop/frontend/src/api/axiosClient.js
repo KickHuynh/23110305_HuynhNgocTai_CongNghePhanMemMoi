@@ -11,6 +11,7 @@ const axiosClient = axios.create({
   },
 });
 
+// Gắn access token vào header trước khi gửi các API cần xác thực.
 axiosClient.interceptors.request.use(
   function (config) {
     const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
@@ -26,6 +27,7 @@ axiosClient.interceptors.request.use(
   }
 );
 
+// Dịch thông báo lỗi và validate từ backend sang nội dung dễ đọc ở frontend.
 axiosClient.interceptors.response.use(
   function (response) {
     if (typeof response?.data?.message === 'string') {
