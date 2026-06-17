@@ -6,7 +6,7 @@ import {
 } from '@ant-design/icons';
 import { message } from 'antd';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getStoredUser } from '../api/authApi';
 import cartApi from '../api/cartApi';
 import orderApi from '../api/orderApi';
@@ -31,11 +31,28 @@ const normalizeCart = (cart) => ({
   items: Array.isArray(cart?.items) ? cart.items : [],
 });
 
-const extractCart = (response) => normalizeCart(extractApiData(response, {})?.cart);
+const extractCart = (response) =>
+  normalizeCart(extractApiData(response, {})?.cart);
+
+const isCartItemUnavailable = (item) =>
+  Number(item?.stockSnapshot || 0) <= 0 ||
+  Number(item?.quantity || 0) > Number(item?.stockSnapshot || 0);
 
 function CheckoutPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const currentUser = getStoredUser();
+  const selectedItemIds = Array.isArray(location.state?.selectedItemIds)
+    ? [
+        ...new Set(
+          location.state.selectedItemIds
+            .map((itemId) => String(itemId || '').trim())
+            .filter(Boolean)
+        ),
+      ]
+    : [];
+  const selectedItemIdsKey = selectedItemIds.join(',');
+  const selectedItemIdSet = new Set(selectedItemIds);
   const [cart, setCart] = useState(emptyCart);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -50,49 +67,90 @@ function CheckoutPage() {
     note: '',
   });
 
-  const hasUnavailableItems = cart.items.some(
-    (item) =>
-      Number(item.stockSnapshot || 0) <= 0 ||
-      Number(item.quantity || 0) > Number(item.stockSnapshot || 0)
+  const hasSelectedItemIds = selectedItemIds.length > 0;
+  const selectedItems = cart.items.filter((item) =>
+    selectedItemIdSet.has(String(item._id))
   );
-  const shippingFee = cart.subtotal < 1000000 ? 30000 : 0;
+  const selectedTotalItems = selectedItems.reduce(
+    (total, item) => total + Number(item.quantity || 0),
+    0
+  );
+  const selectedSubtotal = selectedItems.reduce(
+    (total, item) =>
+      total + Number(item.price || 0) * Number(item.quantity || 0),
+    0
+  );
+  const hasUnavailableSelectedItems = selectedItems.some((item) =>
+    isCartItemUnavailable(item)
+  );
+  const shippingFee = selectedSubtotal < 1000000 ? 30000 : 0;
   const discount = 0;
-  const total = cart.subtotal + shippingFee - discount;
+  const total = selectedSubtotal + shippingFee - discount;
 
-  // Tải giỏ hàng để kiểm tra dữ liệu checkout và tính tổng tiền hiện tại.
+  // Tải giỏ hàng và chỉ giữ lại các item được chọn để checkout.
   useEffect(() => {
+    if (!hasSelectedItemIds) {
+      message.warning('Vui lòng chọn sản phẩm để thanh toán.');
+      navigate('/cart', { replace: true });
+      return;
+    }
+
+    const effectSelectedItemIdSet = new Set(selectedItemIdsKey.split(','));
+
     const fetchCart = async () => {
       try {
         setLoading(true);
         setError('');
 
         const response = await cartApi.getCart();
-        setCart(extractCart(response));
+        const nextCart = extractCart(response);
+        const nextSelectedItems = nextCart.items.filter((item) =>
+          effectSelectedItemIdSet.has(String(item._id))
+        );
+
+        if (nextSelectedItems.length === 0) {
+          message.warning('Vui lòng chọn sản phẩm để thanh toán.');
+          navigate('/cart', { replace: true });
+          return;
+        }
+
+        setCart(nextCart);
       } catch (apiError) {
-        setError(apiError.response?.data?.message || 'Không thể tải thông tin thanh toán lúc này.');
+        setError(
+          apiError.response?.data?.message ||
+            'Không thể tải thông tin thanh toán lúc này.'
+        );
         setCart(emptyCart);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCart();
-  }, []);
+    void fetchCart();
+  }, [hasSelectedItemIds, navigate, selectedItemIdsKey]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-      setFormData((current) => ({
-        ...current,
-        [name]: value,
-      }));
+    setFormData((current) => ({
+      ...current,
+      [name]: value,
+    }));
   };
 
-  // Gửi thông tin giao hàng để backend tạo đơn COD từ giỏ hàng hiện tại.
+  // Gửi thông tin giao hàng và itemIds để backend tạo đơn COD theo lựa chọn.
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (hasUnavailableItems) {
-      message.warning('Vui lòng cập nhật các sản phẩm không khả dụng trước khi đặt hàng.');
+    if (selectedItems.length === 0) {
+      message.warning('Vui lòng chọn sản phẩm để thanh toán.');
+      navigate('/cart', { replace: true });
+      return;
+    }
+
+    if (hasUnavailableSelectedItems) {
+      message.warning(
+        'Vui lòng cập nhật các sản phẩm đã chọn trước khi đặt hàng.'
+      );
       return;
     }
 
@@ -102,17 +160,25 @@ function CheckoutPage() {
       const response = await orderApi.checkout({
         shippingAddress: formData,
         paymentMethod: 'COD',
+        itemIds: selectedItemIds,
       });
 
       const order = extractApiData(response, {})?.order;
       message.success('Đặt hàng thành công.');
       navigate(order?._id ? `/orders/${order._id}` : '/orders');
     } catch (apiError) {
-      message.error(apiError.response?.data?.message || 'Không thể hoàn tất thanh toán lúc này.');
+      message.error(
+        apiError.response?.data?.message ||
+          'Không thể hoàn tất thanh toán lúc này.'
+      );
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (!hasSelectedItemIds) {
+    return null;
+  }
 
   if (loading) {
     return (
@@ -160,18 +226,22 @@ function CheckoutPage() {
     );
   }
 
-  if (cart.items.length === 0) {
+  if (cart.items.length === 0 || selectedItems.length === 0) {
+    return null;
+  }
+
+  if (selectedTotalItems === 0) {
     return (
       <div className="page-shell pb-16">
         <div className="content-shell py-16">
           <EmptyState
             icon={<ShoppingOutlined />}
-            title="Giỏ hàng đang trống"
-            description="Hãy thêm ít nhất một sản phẩm trước khi chuyển sang bước thanh toán."
+            title="Chưa có sản phẩm được chọn"
+            description="Hãy quay lại giỏ hàng và chọn ít nhất một sản phẩm trước khi thanh toán."
             minHeight="min-h-[420px]"
             action={
-              <Link to="/products" className="btn-primary">
-                Xem sản phẩm
+              <Link to="/cart" className="btn-primary">
+                Quay lại giỏ hàng
               </Link>
             }
           />
@@ -184,16 +254,21 @@ function CheckoutPage() {
     <div className="page-shell pb-16">
       <div className="content-shell py-8">
         <div className="glass-panel overflow-hidden bg-[radial-gradient(circle_at_top_right,_rgba(255,69,0,0.14),_transparent_24%),linear-gradient(135deg,_rgba(255,255,255,0.96)_0%,_rgba(255,247,237,0.95)_100%)] p-6 sm:p-8">
-          <p className="text-sm font-bold uppercase tracking-[0.3em] text-orange-600">Thanh toán COD</p>
+          <p className="text-sm font-bold uppercase tracking-[0.3em] text-orange-600">
+            Thanh toán COD
+          </p>
           <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="section-heading">Hoàn tất đơn hàng sneaker</h1>
               <p className="section-copy mt-3 max-w-2xl">
-                Điền thông tin giao hàng, xem lại đơn hàng và xác nhận đặt hàng bằng thanh toán khi nhận hàng.
+                Điền thông tin giao hàng, xem lại các sản phẩm đã chọn và xác
+                nhận đặt hàng bằng thanh toán khi nhận hàng.
               </p>
             </div>
             <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-5 py-4 shadow-lg shadow-emerald-500/10">
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-700">Phương thức thanh toán</p>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-700">
+                Phương thức thanh toán
+              </p>
               <p className="mt-2 text-2xl font-bold text-emerald-800">COD</p>
             </div>
           </div>
@@ -206,14 +281,21 @@ function CheckoutPage() {
                 <EnvironmentOutlined className="text-lg" />
               </div>
               <div>
-                <p className="text-sm font-bold uppercase tracking-[0.24em] text-orange-600">Thông tin giao hàng</p>
-                <h2 className="text-2xl font-bold text-slate-950">Chi tiết nhận hàng</h2>
+                <p className="text-sm font-bold uppercase tracking-[0.24em] text-orange-600">
+                  Thông tin giao hàng
+                </p>
+                <h2 className="text-2xl font-bold text-slate-950">
+                  Chi tiết nhận hàng
+                </h2>
               </div>
             </div>
 
             <div className="mt-8 grid gap-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label htmlFor="fullName" className="mb-2 block text-sm font-bold text-slate-900">
+                <label
+                  htmlFor="fullName"
+                  className="mb-2 block text-sm font-bold text-slate-900"
+                >
                   Họ và tên
                 </label>
                 <input
@@ -228,7 +310,10 @@ function CheckoutPage() {
               </div>
 
               <div>
-                <label htmlFor="phone" className="mb-2 block text-sm font-bold text-slate-900">
+                <label
+                  htmlFor="phone"
+                  className="mb-2 block text-sm font-bold text-slate-900"
+                >
                   Số điện thoại
                 </label>
                 <input
@@ -243,7 +328,10 @@ function CheckoutPage() {
               </div>
 
               <div>
-                <label htmlFor="city" className="mb-2 block text-sm font-bold text-slate-900">
+                <label
+                  htmlFor="city"
+                  className="mb-2 block text-sm font-bold text-slate-900"
+                >
                   Tỉnh/Thành phố
                 </label>
                 <input
@@ -258,7 +346,10 @@ function CheckoutPage() {
               </div>
 
               <div className="sm:col-span-2">
-                <label htmlFor="addressLine" className="mb-2 block text-sm font-bold text-slate-900">
+                <label
+                  htmlFor="addressLine"
+                  className="mb-2 block text-sm font-bold text-slate-900"
+                >
                   Địa chỉ
                 </label>
                 <input
@@ -273,7 +364,10 @@ function CheckoutPage() {
               </div>
 
               <div>
-                <label htmlFor="ward" className="mb-2 block text-sm font-bold text-slate-900">
+                <label
+                  htmlFor="ward"
+                  className="mb-2 block text-sm font-bold text-slate-900"
+                >
                   Phường/Xã
                 </label>
                 <input
@@ -287,7 +381,10 @@ function CheckoutPage() {
               </div>
 
               <div>
-                <label htmlFor="district" className="mb-2 block text-sm font-bold text-slate-900">
+                <label
+                  htmlFor="district"
+                  className="mb-2 block text-sm font-bold text-slate-900"
+                >
                   Quận/Huyện
                 </label>
                 <input
@@ -301,7 +398,10 @@ function CheckoutPage() {
               </div>
 
               <div className="sm:col-span-2">
-                <label htmlFor="note" className="mb-2 block text-sm font-bold text-slate-900">
+                <label
+                  htmlFor="note"
+                  className="mb-2 block text-sm font-bold text-slate-900"
+                >
                   Ghi chú
                 </label>
                 <textarea
@@ -322,31 +422,40 @@ function CheckoutPage() {
                   <CreditCardOutlined />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-950">Phương thức thanh toán: Thanh toán khi nhận hàng</p>
-                  <p className="text-sm text-slate-500">Ví điện tử có thể được bổ sung sau như một hướng phát triển tiếp theo.</p>
+                  <p className="text-sm font-bold text-slate-950">
+                    Phương thức thanh toán: Thanh toán khi nhận hàng
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    Ví điện tử có thể được bổ sung sau như một hướng phát triển
+                    tiếp theo.
+                  </p>
                 </div>
               </div>
             </div>
 
-            {hasUnavailableItems && (
+            {hasUnavailableSelectedItems && (
               <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
-                Một số sản phẩm trong giỏ hàng không còn đủ số lượng đã chọn. Vui lòng quay lại giỏ hàng trước.
+                Một số sản phẩm đã chọn không còn đủ số lượng. Vui lòng quay lại
+                giỏ hàng trước.
               </div>
             )}
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button
                 type="submit"
-                disabled={submitting || hasUnavailableItems}
+                disabled={submitting || hasUnavailableSelectedItems}
                 className={`flex-1 rounded-2xl px-5 py-4 text-sm font-bold transition ${
-                  submitting || hasUnavailableItems
+                  submitting || hasUnavailableSelectedItems
                     ? 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
                     : 'bg-orange-600 text-white shadow-lg shadow-orange-600/25 hover:-translate-y-0.5 hover:bg-orange-700'
                 }`}
               >
                 {submitting ? 'Đang đặt hàng...' : 'Đặt hàng'}
               </button>
-              <Link to="/cart" className="btn-secondary justify-center rounded-2xl px-5 py-4">
+              <Link
+                to="/cart"
+                className="btn-secondary justify-center rounded-2xl px-5 py-4"
+              >
                 Quay lại giỏ hàng
               </Link>
             </div>
@@ -354,10 +463,26 @@ function CheckoutPage() {
 
           <aside className="space-y-5 lg:sticky lg:top-28 lg:self-start">
             <div className="glass-panel p-6 sm:p-7">
-              <p className="text-sm font-bold uppercase tracking-[0.28em] text-orange-600">Tóm tắt đơn hàng</p>
+              <p className="text-sm font-bold uppercase tracking-[0.28em] text-orange-600">
+                Tóm tắt đơn hàng
+              </p>
+              <div className="mt-4 rounded-3xl border border-orange-100 bg-orange-50/70 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="font-semibold text-slate-600">
+                    Sản phẩm đã chọn
+                  </span>
+                  <span className="text-lg font-bold text-slate-950">
+                    {selectedTotalItems}
+                  </span>
+                </div>
+              </div>
+
               <div className="mt-6 space-y-4">
-                {cart.items.map((item) => (
-                  <div key={item._id} className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
+                {selectedItems.map((item) => (
+                  <div
+                    key={item._id}
+                    className="rounded-[24px] border border-slate-200 bg-slate-50 p-4"
+                  >
                     <div className="flex gap-4">
                       <div className="h-20 w-20 overflow-hidden rounded-2xl bg-white">
                         <img
@@ -367,14 +492,21 @@ function CheckoutPage() {
                         />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="truncate text-lg font-bold text-slate-950">{sanitizeText(item.name)}</h3>
+                        <h3 className="truncate text-lg font-bold text-slate-950">
+                          {sanitizeText(item.name)}
+                        </h3>
                         <p className="mt-1 text-sm text-slate-500">
                           Kích cỡ {item.size} | {item.color}
                         </p>
                         <div className="mt-3 flex items-center justify-between gap-3 text-sm">
-                          <span className="font-semibold text-slate-500">SL {item.quantity}</span>
+                          <span className="font-semibold text-slate-500">
+                            SL {item.quantity}
+                          </span>
                           <span className="font-bold text-slate-950">
-                            {formatCurrency(Number(item.price || 0) * Number(item.quantity || 0))}
+                            {formatCurrency(
+                              Number(item.price || 0) *
+                                Number(item.quantity || 0)
+                            )}
                           </span>
                         </div>
                       </div>
@@ -386,27 +518,42 @@ function CheckoutPage() {
               <div className="mt-6 space-y-4 border-t border-slate-100 pt-6">
                 <div className="flex items-center justify-between gap-4">
                   <span className="font-semibold text-slate-500">Tạm tính</span>
-                  <span className="font-bold text-slate-950">{formatCurrency(cart.subtotal)}</span>
+                  <span className="font-bold text-slate-950">
+                    {formatCurrency(selectedSubtotal)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-4">
-                  <span className="font-semibold text-slate-500">Phí vận chuyển</span>
-                  <span className="font-bold text-slate-950">{shippingFee === 0 ? 'Miễn phí' : formatCurrency(shippingFee)}</span>
+                  <span className="font-semibold text-slate-500">
+                    Phí vận chuyển
+                  </span>
+                  <span className="font-bold text-slate-950">
+                    {shippingFee === 0
+                      ? 'Miễn phí'
+                      : formatCurrency(shippingFee)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <span className="font-semibold text-slate-500">Giảm giá</span>
-                  <span className="font-bold text-slate-950">{formatCurrency(discount)}</span>
+                  <span className="font-bold text-slate-950">
+                    {formatCurrency(discount)}
+                  </span>
                 </div>
                 <div className="rounded-3xl border border-orange-100 bg-orange-50/70 p-4">
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-sm font-bold uppercase tracking-[0.24em] text-orange-700">Tổng tiền</span>
-                    <span className="text-2xl font-bold text-orange-700">{formatCurrency(total)}</span>
+                    <span className="text-sm font-bold uppercase tracking-[0.24em] text-orange-700">
+                      Tổng tiền
+                    </span>
+                    <span className="text-2xl font-bold text-orange-700">
+                      {formatCurrency(total)}
+                    </span>
                   </div>
                 </div>
                 <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
                   <div className="flex items-start gap-3">
                     <CheckCircleFilled className="mt-1 text-emerald-600" />
                     <p className="text-sm leading-7 text-emerald-700">
-                      Đơn hàng từ {formatCurrency(1000000)} sẽ được tự động miễn phí vận chuyển.
+                      Đơn hàng từ {formatCurrency(1000000)} sẽ được tự động miễn
+                      phí vận chuyển.
                     </p>
                   </div>
                 </div>

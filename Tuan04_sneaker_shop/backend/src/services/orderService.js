@@ -138,17 +138,34 @@ const restoreInventoryForOrderItems = async (items) => {
   );
 };
 
-// Xóa giỏ hàng sau khi checkout thành công để tránh đặt trùng lại.
-const clearUserCart = async (userId) => {
+// Tính lại tổng số lượng và tạm tính của giỏ sau khi xóa item đã mua.
+const recalculateCartTotals = (cart) => {
+  cart.totalItems = cart.items.reduce(
+    (total, item) => total + Number(item.quantity || 0),
+    0
+  );
+  cart.subtotal = cart.items.reduce(
+    (total, item) =>
+      total + Number(item.price || 0) * Number(item.quantity || 0),
+    0
+  );
+
+  return cart;
+};
+
+// Chỉ xóa các item đã checkout thành công khỏi giỏ hàng MongoDB.
+const removePurchasedItemsFromCart = async (userId, purchasedItemIds = []) => {
   const cart = await Cart.findOne({ user: userId });
 
   if (!cart) {
     return;
   }
 
-  cart.items = [];
-  cart.totalItems = 0;
-  cart.subtotal = 0;
+  const purchasedItemIdSet = new Set(purchasedItemIds.map(String));
+  cart.items = cart.items.filter(
+    (item) => !purchasedItemIdSet.has(String(item._id))
+  );
+  recalculateCartTotals(cart);
   await cart.save();
 };
 
@@ -199,8 +216,22 @@ const createOrderFromCart = async (userId, payload = {}) => {
     throw createServiceError('Your cart is empty', 400);
   }
 
+  const requestedItemIds = Array.isArray(payload.itemIds)
+    ? [...new Set(payload.itemIds.map((itemId) => normalizeText(itemId)).filter(Boolean))]
+    : [];
+  const requestedItemIdSet = new Set(requestedItemIds);
+  // Chỉ lấy các dòng giỏ hàng mà người dùng chọn để thanh toán.
+  const selectedCartItems =
+    requestedItemIds.length > 0
+      ? cart.items.filter((item) => requestedItemIdSet.has(String(item._id)))
+      : cart.items;
+
+  if (selectedCartItems.length === 0) {
+    throw createServiceError('Vui lòng chọn sản phẩm để thanh toán', 400);
+  }
+
   const productIds = [
-    ...new Set(cart.items.map((item) => String(item.product || ''))),
+    ...new Set(selectedCartItems.map((item) => String(item.product || ''))),
   ].filter((productId) => mongoose.Types.ObjectId.isValid(productId));
 
   const products = await Product.find({
@@ -212,9 +243,10 @@ const createOrderFromCart = async (userId, payload = {}) => {
 
   const orderItems = [];
   let subtotal = 0;
+  const purchasedCartItemIds = selectedCartItems.map((item) => String(item._id));
 
   // Chốt lại giá, biến thể và số lượng hiện có trước khi tạo đơn.
-  cart.items.forEach((item) => {
+  selectedCartItems.forEach((item) => {
     const product = productsById.get(String(item.product));
 
     validateProductChoice(product, item);
@@ -303,10 +335,10 @@ const createOrderFromCart = async (userId, payload = {}) => {
     });
 
     try {
-      await clearUserCart(userId);
+      await removePurchasedItemsFromCart(userId, purchasedCartItemIds);
     } catch (clearCartError) {
       console.error(
-        'Failed to clear cart after checkout:',
+        'Failed to remove purchased cart items after checkout:',
         clearCartError.message
       );
     }

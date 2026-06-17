@@ -241,7 +241,7 @@ function ProductDetailPage() {
                       onClick={() => setSelectedSize(size)}
                       className={`min-w-14 rounded-2xl border px-4 py-3 text-sm font-bold transition ${
                         selectedSize === size
-                          ? 'border-slate-950 bg-slate-950 text-white'
+                          ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm ring-2 ring-orange-100'
                           : 'border-slate-200 bg-white text-slate-700 hover:border-orange-400 hover:text-orange-600'
                       }`}
                     >
@@ -266,7 +266,7 @@ function ProductDetailPage() {
                       onClick={() => setSelectedColor(color)}
                       className={`inline-flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-bold transition ${
                         selectedColor === color
-                          ? 'border-slate-950 bg-slate-950 text-white'
+                          ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm ring-2 ring-orange-100'
                           : 'border-slate-200 bg-white text-slate-700 hover:border-orange-400 hover:text-orange-600'
                       }`}
                     >

@@ -284,7 +284,7 @@ const validateUpdateCartItem = (req, res, next) => {
 
 // Kiểm tra thông tin giao hàng và phương thức COD trước khi checkout.
 const validateCheckout = (req, res, next) => {
-  const { shippingAddress, paymentMethod } = req.body;
+  const { shippingAddress, paymentMethod, itemIds } = req.body;
   const errors = [];
 
   if (!shippingAddress || typeof shippingAddress !== 'object') {
@@ -311,6 +311,23 @@ const validateCheckout = (req, res, next) => {
     errors.push('paymentMethod must be COD');
   }
 
+  if (itemIds !== undefined) {
+    if (!Array.isArray(itemIds)) {
+      errors.push('itemIds must be an array if provided');
+    } else if (itemIds.length === 0) {
+      errors.push('itemIds cannot be empty when provided');
+    } else if (
+      itemIds.some(
+        (itemId) =>
+          !mongoose.Types.ObjectId.isValid(
+            normalizeTrimmedText(itemId)
+          )
+      )
+    ) {
+      errors.push('Each itemId must be a valid MongoDB ObjectId');
+    }
+  }
+
   if (errors.length > 0) {
     return sendValidationErrors(res, errors);
   }
@@ -325,6 +342,9 @@ const validateCheckout = (req, res, next) => {
     city: normalizeTrimmedText(shippingAddress.city),
     note: normalizeTrimmedText(shippingAddress.note),
   };
+  req.body.itemIds = Array.isArray(itemIds)
+    ? itemIds.map((itemId) => normalizeTrimmedText(itemId))
+    : undefined;
 
   return next();
 };

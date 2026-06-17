@@ -23,6 +23,27 @@ const EXACT_MESSAGE_MAP = {
   'You are not logged in': 'Bạn chưa đăng nhập.',
   'User no longer exists': 'Tài khoản không còn tồn tại.',
   'Invalid or expired token': 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn.',
+  'Please verify your email before login':
+    'Vui lòng xác thực email trước khi đăng nhập.',
+  'Email already exists': 'Email này đã tồn tại.',
+  'Student ID already exists': 'Mã sinh viên này đã tồn tại.',
+  'Failed to send verification OTP email':
+    'Không thể gửi email OTP xác thực lúc này.',
+  'User not found': 'Không tìm thấy người dùng.',
+  'OTP is invalid or has expired': 'Mã OTP không hợp lệ hoặc đã hết hạn.',
+  'Invalid OTP': 'Mã OTP không đúng.',
+  'OTP has expired': 'Mã OTP đã hết hạn.',
+  'Email is already verified. Please login.':
+    'Email đã được xác thực. Vui lòng đăng nhập.',
+  'Verification OTP sent successfully':
+    'Đã gửi lại mã OTP xác thực thành công.',
+  'Please provide email and password':
+    'Vui lòng nhập đầy đủ email và mật khẩu.',
+  'Invalid email or password': 'Email hoặc mật khẩu không đúng.',
+  'User with this email does not exist':
+    'Không tìm thấy tài khoản với email này.',
+  'Password reset OTP sent to your email':
+    'Mã OTP đặt lại mật khẩu đã được gửi đến email của bạn.',
   'Register successfully. Please verify OTP sent to your email.':
     'Đăng ký thành công. Vui lòng xác thực mã OTP đã được gửi đến email của bạn.',
   'Verify register OTP successfully': 'Xác thực OTP đăng ký thành công.',
@@ -53,10 +74,14 @@ const EXACT_MESSAGE_MAP = {
     'Hiện tại chỉ hỗ trợ thanh toán khi nhận hàng (COD).',
   'You must be logged in to checkout':
     'Bạn cần đăng nhập để thực hiện đặt hàng.',
+  'Please select items to checkout': 'Vui lòng chọn sản phẩm để thanh toán.',
+  'Checkout failed. Please try again.':
+    'Không thể hoàn tất thanh toán. Vui lòng thử lại.',
   'Checkout completed successfully': 'Đặt hàng thành công.',
   'Orders retrieved successfully': 'Lấy danh sách đơn hàng thành công.',
   'Order retrieved successfully': 'Lấy chi tiết đơn hàng thành công.',
   'Order not found': 'Không tìm thấy đơn hàng.',
+  'Invalid order ID': 'Mã đơn hàng không hợp lệ.',
   'This order is already cancelled': 'Đơn hàng này đã bị hủy.',
   'A cancellation request has already been sent to the shop':
     'Yêu cầu hủy đơn đã được gửi tới shop.',
@@ -79,6 +104,23 @@ const EXACT_MESSAGE_MAP = {
     'Cập nhật trạng thái đơn hàng thành công.',
   'Something went wrong': 'Đã xảy ra lỗi, vui lòng thử lại.',
   'Please try again in a moment.': 'Vui lòng thử lại sau ít phút.',
+  'shippingAddress is required': 'Vui lòng nhập thông tin giao hàng.',
+  'shippingAddress.fullName is required':
+    'Vui lòng nhập họ và tên người nhận.',
+  'shippingAddress.phone is required':
+    'Vui lòng nhập số điện thoại người nhận.',
+  'shippingAddress.addressLine is required':
+    'Vui lòng nhập địa chỉ nhận hàng.',
+  'shippingAddress.city is required':
+    'Vui lòng nhập tỉnh hoặc thành phố.',
+  'paymentMethod must be COD':
+    'Phương thức thanh toán bắt buộc phải là COD.',
+  'itemIds must be an array if provided':
+    'Danh sách sản phẩm thanh toán phải là một mảng.',
+  'itemIds cannot be empty when provided':
+    'Vui lòng chọn ít nhất một sản phẩm để thanh toán.',
+  'Each itemId must be a valid MongoDB ObjectId':
+    'Có sản phẩm được chọn không hợp lệ.',
 };
 
 // Dịch các thông báo động có chứa tên sản phẩm hoặc số lượng tồn kho.

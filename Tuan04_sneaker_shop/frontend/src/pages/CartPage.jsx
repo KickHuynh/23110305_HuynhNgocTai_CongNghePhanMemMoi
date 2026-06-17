@@ -5,7 +5,7 @@ import {
   ShoppingCartOutlined,
 } from '@ant-design/icons';
 import { message } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import cartApi from '../api/cartApi';
 import EmptyState from '../components/common/EmptyState';
@@ -30,7 +30,17 @@ const normalizeCart = (cart) => ({
   items: Array.isArray(cart?.items) ? cart.items : [],
 });
 
-const extractCart = (response) => normalizeCart(extractApiData(response, {})?.cart);
+const extractCart = (response) =>
+  normalizeCart(extractApiData(response, {})?.cart);
+
+const isCartItemUnavailable = (item) =>
+  Number(item?.stockSnapshot || 0) <= 0 ||
+  Number(item?.quantity || 0) > Number(item?.stockSnapshot || 0);
+
+const getSelectableItemIds = (items = []) =>
+  items
+    .filter((item) => !isCartItemUnavailable(item))
+    .map((item) => String(item._id));
 
 function CartPage() {
   const navigate = useNavigate();
@@ -39,12 +49,47 @@ function CartPage() {
   const [error, setError] = useState('');
   const [processingItemId, setProcessingItemId] = useState('');
   const [clearingCart, setClearingCart] = useState(false);
+  const [selectedItemIds, setSelectedItemIds] = useState([]);
+  const hasInitializedSelectionRef = useRef(false);
 
-  const hasUnavailableItems = cart.items.some(
-    (item) =>
-      Number(item.stockSnapshot || 0) <= 0 ||
-      Number(item.quantity || 0) > Number(item.stockSnapshot || 0)
+  const selectedItems = cart.items.filter((item) =>
+    selectedItemIds.includes(String(item._id))
   );
+  const selectedTotalItems = selectedItems.reduce(
+    (total, item) => total + Number(item.quantity || 0),
+    0
+  );
+  const selectedSubtotal = selectedItems.reduce(
+    (total, item) =>
+      total + Number(item.price || 0) * Number(item.quantity || 0),
+    0
+  );
+  const selectedHasUnavailableItems = selectedItems.some((item) =>
+    isCartItemUnavailable(item)
+  );
+  const selectableItemIds = getSelectableItemIds(cart.items);
+  const isAllSelectableSelected =
+    selectableItemIds.length > 0 &&
+    selectableItemIds.every((itemId) => selectedItemIds.includes(itemId));
+  const canProceedToCheckout =
+    selectedItems.length > 0 && !selectedHasUnavailableItems;
+
+  // Đồng bộ giỏ hàng và giữ lại các item đã chọn còn tồn tại.
+  const applyCartState = (nextCart, { initializeSelection = false } = {}) => {
+    setCart(nextCart);
+    setSelectedItemIds((currentItemIds) => {
+      const existingItemIds = new Set(
+        nextCart.items.map((item) => String(item._id))
+      );
+
+      if (initializeSelection) {
+        hasInitializedSelectionRef.current = true;
+        return getSelectableItemIds(nextCart.items);
+      }
+
+      return currentItemIds.filter((itemId) => existingItemIds.has(itemId));
+    });
+  };
 
   // Tải lại giỏ hàng từ backend sau các thao tác cập nhật hoặc khi cần đồng bộ.
   const fetchCart = async ({ showLoading = true } = {}) => {
@@ -55,10 +100,13 @@ function CartPage() {
 
       setError('');
       const response = await cartApi.getCart();
-      setCart(extractCart(response));
+      applyCartState(extractCart(response));
     } catch (apiError) {
-      setError(apiError.response?.data?.message || 'Không thể tải giỏ hàng lúc này.');
+      setError(
+        apiError.response?.data?.message || 'Không thể tải giỏ hàng lúc này.'
+      );
       setCart(emptyCart);
+      setSelectedItemIds([]);
     } finally {
       if (showLoading) {
         setLoading(false);
@@ -79,14 +127,17 @@ function CartPage() {
         }
 
         setError('');
-        setCart(extractCart(response));
+        applyCartState(extractCart(response), { initializeSelection: true });
       } catch (apiError) {
         if (!isActive) {
           return;
         }
 
-        setError(apiError.response?.data?.message || 'Không thể tải giỏ hàng lúc này.');
+        setError(
+          apiError.response?.data?.message || 'Không thể tải giỏ hàng lúc này.'
+        );
         setCart(emptyCart);
+        setSelectedItemIds([]);
       } finally {
         if (isActive) {
           setLoading(false);
@@ -101,6 +152,31 @@ function CartPage() {
     };
   }, []);
 
+  // Cho phép người dùng chọn hoặc bỏ chọn từng dòng sản phẩm hợp lệ.
+  const handleToggleItemSelection = (itemId) => {
+    const targetItem = cart.items.find((item) => String(item._id) === itemId);
+
+    if (!targetItem || isCartItemUnavailable(targetItem)) {
+      return;
+    }
+
+    setSelectedItemIds((currentItemIds) =>
+      currentItemIds.includes(itemId)
+        ? currentItemIds.filter((currentItemId) => currentItemId !== itemId)
+        : [...currentItemIds, itemId]
+    );
+  };
+
+  // Chọn nhanh toàn bộ item hợp lệ hoặc bỏ toàn bộ lựa chọn hiện tại.
+  const handleToggleSelectAll = () => {
+    if (isAllSelectableSelected) {
+      setSelectedItemIds([]);
+      return;
+    }
+
+    setSelectedItemIds(selectableItemIds);
+  };
+
   // Gửi số lượng mới lên backend và đồng bộ lại giỏ hàng nếu có thay đổi.
   const handleQuantityChange = async (itemId, nextQuantity, currentQuantity) => {
     if (nextQuantity === currentQuantity) {
@@ -112,13 +188,37 @@ function CartPage() {
       const response = await cartApi.updateCartItem(itemId, {
         quantity: nextQuantity,
       });
-      setCart(extractCart(response));
+      applyCartState(extractCart(response));
     } catch (apiError) {
-      message.error(apiError.response?.data?.message || 'Không thể cập nhật sản phẩm trong giỏ hàng lúc này.');
+      message.error(
+        apiError.response?.data?.message ||
+          'Không thể cập nhật sản phẩm trong giỏ hàng lúc này.'
+      );
       await fetchCart({ showLoading: false });
     } finally {
       setProcessingItemId('');
     }
+  };
+
+  // Chuyển sang checkout chỉ với các item đã được chọn hợp lệ.
+  const handleProceedToCheckout = () => {
+    if (selectedItems.length === 0) {
+      message.warning('Vui lòng chọn ít nhất một sản phẩm để thanh toán.');
+      return;
+    }
+
+    if (selectedHasUnavailableItems) {
+      message.warning(
+        'Vui lòng cập nhật các sản phẩm đã chọn trước khi thanh toán.'
+      );
+      return;
+    }
+
+    navigate('/checkout', {
+      state: {
+        selectedItemIds,
+      },
+    });
   };
 
   // Xóa một dòng sản phẩm khỏi giỏ hàng hiện tại.
@@ -126,10 +226,13 @@ function CartPage() {
     try {
       setProcessingItemId(itemId);
       const response = await cartApi.removeCartItem(itemId);
-      setCart(extractCart(response));
+      applyCartState(extractCart(response));
       message.success('Đã xóa sản phẩm khỏi giỏ hàng.');
     } catch (apiError) {
-      message.error(apiError.response?.data?.message || 'Không thể xóa sản phẩm khỏi giỏ hàng lúc này.');
+      message.error(
+        apiError.response?.data?.message ||
+          'Không thể xóa sản phẩm khỏi giỏ hàng lúc này.'
+      );
     } finally {
       setProcessingItemId('');
     }
@@ -144,10 +247,13 @@ function CartPage() {
     try {
       setClearingCart(true);
       const response = await cartApi.clearCart();
-      setCart(extractCart(response));
+      applyCartState(extractCart(response));
       message.success('Đã xóa toàn bộ giỏ hàng.');
     } catch (apiError) {
-      message.error(apiError.response?.data?.message || 'Không thể xóa giỏ hàng lúc này.');
+      message.error(
+        apiError.response?.data?.message ||
+          'Không thể xóa giỏ hàng lúc này.'
+      );
     } finally {
       setClearingCart(false);
     }
@@ -195,7 +301,11 @@ function CartPage() {
             message={error}
             minHeight="min-h-[420px]"
             action={
-              <button type="button" onClick={() => fetchCart()} className="btn-primary">
+              <button
+                type="button"
+                onClick={() => fetchCart()}
+                className="btn-primary"
+              >
                 <ReloadOutlined />
                 Thử lại
               </button>
@@ -230,18 +340,26 @@ function CartPage() {
     <div className="page-shell pb-16">
       <div className="content-shell py-8">
         <div className="glass-panel overflow-hidden bg-[radial-gradient(circle_at_top_right,_rgba(255,69,0,0.14),_transparent_24%),linear-gradient(135deg,_rgba(255,255,255,0.96)_0%,_rgba(255,247,237,0.95)_100%)] p-6 sm:p-8">
-          <p className="text-sm font-bold uppercase tracking-[0.3em] text-orange-600">Giỏ hàng của tôi</p>
+          <p className="text-sm font-bold uppercase tracking-[0.3em] text-orange-600">
+            Giỏ hàng của tôi
+          </p>
           <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="section-heading">Sẵn sàng để đặt hàng</h1>
               <p className="section-copy mt-3 max-w-2xl">
-                Kiểm tra lại kích cỡ, màu sắc và số lượng trước khi chuyển sang bước đặt hàng COD.
+                Kiểm tra lại kích cỡ, màu sắc và số lượng trước khi chuyển sang
+                bước đặt hàng COD.
               </p>
             </div>
             <div className="rounded-3xl border border-orange-100 bg-white/90 px-5 py-4 shadow-lg shadow-orange-600/10">
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">Tổng quan giỏ hàng</p>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">
+                Đã chọn thanh toán
+              </p>
               <p className="mt-2 text-2xl font-bold text-slate-950">
-                {cart.totalItems} sản phẩm
+                {selectedTotalItems} sản phẩm
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-500">
+                {cart.totalItems} sản phẩm trong giỏ
               </p>
             </div>
           </div>
@@ -249,14 +367,52 @@ function CartPage() {
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.18fr_0.82fr]">
           <div className="space-y-5">
+            <div className="glass-panel flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-[0.24em] text-orange-600">
+                  Lựa chọn thanh toán
+                </p>
+                <p className="mt-2 text-sm text-slate-500">
+                  Chọn một hoặc nhiều sản phẩm hợp lệ để chuyển sang bước
+                  checkout COD.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleToggleSelectAll}
+                disabled={selectableItemIds.length === 0}
+                className="btn-secondary justify-center rounded-2xl px-5 py-3 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isAllSelectableSelected
+                  ? 'Bỏ chọn tất cả'
+                  : 'Chọn tất cả hợp lệ'}
+              </button>
+            </div>
+
             {cart.items.map((item) => {
-              const itemSubtotal = Number(item.price || 0) * Number(item.quantity || 0);
+              const itemSubtotal =
+                Number(item.price || 0) * Number(item.quantity || 0);
               const isProcessing = processingItemId === item._id;
-              const stockShortage = Number(item.quantity || 0) > Number(item.stockSnapshot || 0);
+              const stockShortage =
+                Number(item.quantity || 0) >
+                Number(item.stockSnapshot || 0);
+              const itemId = String(item._id);
+              const isSelected = selectedItemIds.includes(itemId);
+              const isUnavailable = isCartItemUnavailable(item);
 
               return (
                 <div key={item._id} className="glass-panel p-5 sm:p-6">
                   <div className="flex flex-col gap-5 lg:flex-row">
+                    <div className="pt-1">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        disabled={isUnavailable}
+                        onChange={() => handleToggleItemSelection(itemId)}
+                        className="h-5 w-5 cursor-pointer rounded border-slate-300 text-orange-600 focus:ring-orange-400 disabled:cursor-not-allowed disabled:opacity-50"
+                      />
+                    </div>
+
                     <div className="overflow-hidden rounded-[24px] bg-slate-100 lg:h-32 lg:w-32">
                       <img
                         src={item.image || createPlaceholderImage(item.name)}
@@ -268,11 +424,24 @@ function CartPage() {
                     <div className="flex min-w-0 flex-1 flex-col gap-4">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
-                          <p className="text-xs font-bold uppercase tracking-[0.24em] text-orange-600">Sản phẩm</p>
-                          <h2 className="mt-2 text-2xl font-bold text-slate-950">{sanitizeText(item.name)}</h2>
+                          <p className="text-xs font-bold uppercase tracking-[0.24em] text-orange-600">
+                            Sản phẩm
+                          </p>
+                          <h2 className="mt-2 text-2xl font-bold text-slate-950">
+                            {sanitizeText(item.name)}
+                          </h2>
                           <div className="mt-3 flex flex-wrap gap-2 text-sm font-semibold text-slate-500">
-                            <span className="rounded-full bg-slate-100 px-3 py-1">Kích cỡ {item.size}</span>
-                            <span className="rounded-full bg-slate-100 px-3 py-1">{item.color}</span>
+                            <span className="rounded-full bg-slate-100 px-3 py-1">
+                              Kích cỡ {item.size}
+                            </span>
+                            <span className="rounded-full bg-slate-100 px-3 py-1">
+                              {item.color}
+                            </span>
+                            {isSelected && (
+                              <span className="rounded-full bg-orange-50 px-3 py-1 text-orange-700">
+                                Đang chọn
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -289,15 +458,27 @@ function CartPage() {
 
                       <div className="grid gap-4 xl:grid-cols-[auto_auto_1fr] xl:items-end">
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">Đơn giá</p>
-                          <p className="mt-2 text-xl font-bold text-orange-600">{formatCurrency(item.price)}</p>
+                          <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">
+                            Đơn giá
+                          </p>
+                          <p className="mt-2 text-xl font-bold text-orange-600">
+                            {formatCurrency(item.price)}
+                          </p>
                         </div>
 
                         <div>
-                          <p className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-slate-500">Số lượng</p>
+                          <p className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-slate-500">
+                            Số lượng
+                          </p>
                           <QuantitySelector
                             value={item.quantity}
-                            onChange={(nextQuantity) => handleQuantityChange(item._id, nextQuantity, item.quantity)}
+                            onChange={(nextQuantity) =>
+                              handleQuantityChange(
+                                item._id,
+                                nextQuantity,
+                                item.quantity
+                              )
+                            }
                             min={1}
                             max={Math.max(Number(item.stockSnapshot || 1), 1)}
                             disabled={isProcessing}
@@ -305,22 +486,29 @@ function CartPage() {
                         </div>
 
                         <div className="xl:text-right">
-                          <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">Tạm tính sản phẩm</p>
-                          <p className="mt-2 text-2xl font-bold text-slate-950">{formatCurrency(itemSubtotal)}</p>
+                          <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">
+                            Tạm tính sản phẩm
+                          </p>
+                          <p className="mt-2 text-2xl font-bold text-slate-950">
+                            {formatCurrency(itemSubtotal)}
+                          </p>
                         </div>
                       </div>
 
                       {Number(item.stockSnapshot || 0) <= 0 ? (
                         <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
-                          Sản phẩm này hiện đã hết hàng. Vui lòng xóa trước khi đặt hàng.
+                          Sản phẩm này hiện đã hết hàng và không thể chọn để
+                          thanh toán.
                         </div>
                       ) : stockShortage ? (
                         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
-                          Tồn kho hiện tại đã thay đổi. Số lượng có thể mua: {item.stockSnapshot}.
+                          Tồn kho hiện tại đã thay đổi. Số lượng có thể mua:{' '}
+                          {item.stockSnapshot}.
                         </div>
                       ) : (
                         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-                          Sản phẩm đủ điều kiện để thanh toán. Số lượng còn lại: {item.stockSnapshot}.
+                          Sản phẩm đủ điều kiện để thanh toán. Số lượng còn
+                          lại: {item.stockSnapshot}.
                         </div>
                       )}
                     </div>
@@ -332,25 +520,45 @@ function CartPage() {
 
           <aside className="space-y-5 lg:sticky lg:top-28 lg:self-start">
             <div className="glass-panel p-6 sm:p-7">
-              <p className="text-sm font-bold uppercase tracking-[0.28em] text-orange-600">Tóm tắt giỏ hàng</p>
+              <p className="text-sm font-bold uppercase tracking-[0.28em] text-orange-600">
+                Tóm tắt giỏ hàng
+              </p>
               <div className="mt-6 space-y-4">
                 <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                  <span className="font-semibold text-slate-500">Tổng sản phẩm</span>
-                  <span className="text-lg font-bold text-slate-950">{cart.totalItems}</span>
+                  <span className="font-semibold text-slate-500">
+                    Sản phẩm đã chọn
+                  </span>
+                  <span className="text-lg font-bold text-slate-950">
+                    {selectedTotalItems}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                  <span className="font-semibold text-slate-500">Tạm tính</span>
-                  <span className="text-lg font-bold text-slate-950">{formatCurrency(cart.subtotal)}</span>
+                  <span className="font-semibold text-slate-500">
+                    Tạm tính đã chọn
+                  </span>
+                  <span className="text-lg font-bold text-slate-950">
+                    {formatCurrency(selectedSubtotal)}
+                  </span>
                 </div>
                 <div className="rounded-3xl border border-orange-100 bg-orange-50/70 p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-orange-700">Lưu ý vận chuyển</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-orange-700">
+                    Lưu ý vận chuyển
+                  </p>
                   <p className="mt-2 text-sm leading-7 text-orange-800">
-                    Phí vận chuyển sẽ được tính ở bước thanh toán. Đơn từ {formatCurrency(1000000)} sẽ được miễn phí giao hàng.
+                    Phí vận chuyển sẽ được tính ở bước thanh toán. Đơn từ{' '}
+                    {formatCurrency(1000000)} sẽ được miễn phí giao hàng.
                   </p>
                 </div>
-                {hasUnavailableItems && (
+                {selectedItems.length === 0 && (
+                  <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-700">
+                    Vui lòng chọn ít nhất một sản phẩm hợp lệ trước khi thanh
+                    toán.
+                  </div>
+                )}
+                {selectedHasUnavailableItems && (
                   <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-600">
-                    Vui lòng cập nhật các sản phẩm không khả dụng trước khi tiếp tục đặt hàng.
+                    Các sản phẩm đã chọn hiện chưa đủ điều kiện thanh toán. Vui
+                    lòng cập nhật lại.
                   </div>
                 )}
               </div>
@@ -358,10 +566,10 @@ function CartPage() {
               <div className="mt-6 grid gap-3">
                 <button
                   type="button"
-                  onClick={() => navigate('/checkout')}
-                  disabled={hasUnavailableItems}
+                  onClick={handleProceedToCheckout}
+                  disabled={!canProceedToCheckout}
                   className={`flex items-center justify-center gap-2 rounded-2xl px-5 py-4 text-sm font-bold transition ${
-                    hasUnavailableItems
+                    !canProceedToCheckout
                       ? 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
                       : 'bg-orange-600 text-white shadow-lg shadow-orange-600/25 hover:-translate-y-0.5 hover:bg-orange-700'
                   }`}
@@ -377,7 +585,10 @@ function CartPage() {
                 >
                   {clearingCart ? 'Đang xóa giỏ hàng...' : 'Xóa giỏ hàng'}
                 </button>
-                <Link to="/products" className="btn-secondary w-full justify-center rounded-2xl px-5 py-4">
+                <Link
+                  to="/products"
+                  className="btn-secondary w-full justify-center rounded-2xl px-5 py-4"
+                >
                   Tiếp tục mua sắm
                 </Link>
               </div>
